@@ -1,0 +1,396 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Symbol IsArchivable="false" IsPlaceable="false" MainGUID="EFA2EC80-F677-DA45-B473-E67193D5E439" MigrationValue="Normal" Owner="1196638531" Signature="1196644685" Version="40">
+<Ancestry SectVersion="1" SectionFlags="0" SubIdent="0" Template="false">
+	<MainGUID>F938E33A-329D-4A36-BE3E-85E126820996</MainGUID>
+	<MainGUID>103E8D2C-8230-42E1-9597-46F84CCE28C0</MainGUID>
+	<MainGUID>B2970E4C-8680-4061-8670-2F4B638F3953</MainGUID>
+</Ancestry>
+
+<CalledMacros SectVersion="2" SectionFlags="0" SubIdent="0">
+	<Macro>
+		<MName><![CDATA["Esitystapa"]]></MName>
+		<MainGUID>342ABC6A-5D17-8948-88F1-FF917FFCA42E</MainGUID>
+	</Macro>
+</CalledMacros>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_3D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_3D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_2D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_2D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_1D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+! kuten kirjasto 23:n DetlevelFunctionMacro
+
+! -------------- kopioi nämä oman ohjelman esiohjelmaan
+
+DETLEVEL_2D_MVO			= 1
+DETLEVEL_2D_SCSENS		= 2
+DETLEVEL_2D_DETAILED	= 3
+DETLEVEL_2D_SIMPLE		= 4
+DETLEVEL_2D_DRAFT		= 5
+DETLEVEL_2D_SYMBOLIC	= 6
+
+dim stDetlevel2D[]
+	stDetlevel2D[1]	= `Esitystavan mukaan`
+	stDetlevel2D[2]	= `Mittakaavassa`
+	stDetlevel2D[3]	= `Täysi`
+	stDetlevel2D[4]	= `Keskitaso`
+	stDetlevel2D[5]	= `Matala`
+	stDetlevel2D[6]	= `Symboli`
+
+! iDetlevel3D:
+DETLEVEL_3D_MVO			= 1
+!	DETLEVEL_3D_SCSENS		= 2	! Unused
+DETLEVEL_3D_DETAILED	= 3
+DETLEVEL_3D_SIMPLE		= 4
+DETLEVEL_3D_DRAFT		= 5
+DETLEVEL_3D_OFF			= 6
+
+dim stDetlevel3D[]
+	stDetlevel3D[1]	= `Esitystavan mukaan`
+	!	stDetlevel3D[2]	= `Mittakaavassa`
+	stDetlevel3D[3]	= `Täysi`
+	stDetlevel3D[4]	= `Yksinkertaistettu`
+	stDetlevel3D[5]	= `Kaaviomainen`
+	stDetlevel3D[6]	= `Pois`
+
+
+! =============================================================================
+! 2D Detail Level
+! =============================================================================
+
+! iDetlevel2D:
+
+
+_iDetlevel2D = iDetlevel2D
+
+if (iDetlevel2D = DETLEVEL_2D_MVO) then	! by MVO
+	_reqDetlevel2D = 0
+	_success = LIBRARYGLOBAL ("Esitystapa", "iDetlevel2D", _reqDetlevel2D)
+	if (_success > 0) then
+		_iDetlevel2D = _reqDetlevel2D
+	else
+		_iDetlevel2D = DETLEVEL_2D_DETAILED
+	endif
+else
+	if (iDetlevel2D = DETLEVEL_2D_SCSENS) then	! Scale Sensitive
+		_iDetlevel2D = DETLEVEL_2D_DETAILED
+		if (GLOB_SCALE > 150) 						then _iDetlevel2D = DETLEVEL_2D_DRAFT
+		if (GLOB_SCALE > 75) & (GLOB_SCALE <= 150)	then _iDetlevel2D = DETLEVEL_2D_SIMPLE
+		if (GLOB_SCALE <= 75) 						then _iDetlevel2D = DETLEVEL_2D_DETAILED
+	endif
+endif
+
+! =============================================================================
+! 3D Detail Level
+! =============================================================================
+
+
+_iDetlevel3D = iDetlevel3D
+
+if (iDetlevel3D = DETLEVEL_3D_MVO) then	! by MVO
+		_reqDetlevel3D = 0
+		_bSuccess = LIBRARYGLOBAL ("Esitystapa", "iDetlevel3D", _reqDetlevel3D)
+
+		_iDetlevel3D = DETLEVEL_3D_DETAILED
+		if _bSuccess then _iDetlevel3D = _reqDetlevel3D
+endif
+
+! =============================================================================
+! Viivat
+! =============================================================================
+
+if esitystavan_mukainen then
+	_=LIBRARYGLOBAL ("Esitystapa", "gs_cont_pen", gs_cont_pen)
+	_=LIBRARYGLOBAL ("Esitystapa", "gs_line_type", gs_line_type)
+	_=LIBRARYGLOBAL ("Esitystapa", "gs_fill", gs_fill)
+	_=LIBRARYGLOBAL ("Esitystapa", "gs_fill_type", gs_fill_type)
+	_=LIBRARYGLOBAL ("Esitystapa", "gs_fill_pen", gs_fill_pen)
+	_=LIBRARYGLOBAL ("Esitystapa", "gs_back_pen", gs_back_pen)
+	_=LIBRARYGLOBAL ("Esitystapa", "gs_view_pen", gs_view_pen)
+	_=LIBRARYGLOBAL ("Esitystapa", "res", res)
+	_=LIBRARYGLOBAL ("Esitystapa", "rautalanka", rautalanka)
+	_=LIBRARYGLOBAL ("Esitystapa", "varjot", varjot)
+endif
+
+end _iDetlevel2D,
+	_iDetlevel3D,
+	gs_cont_pen,
+	gs_line_type,
+	gs_fill,
+	gs_fill_type,
+	gs_fill_pen,
+	gs_back_pen,
+	gs_view_pen,
+	res, rautalanka,varjot
+	
+	
+]]>
+</Script_1D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_PR SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_PR>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_UI SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+
+UI_PAGE sivu, -1, "Esitystavat", "" ! ----------------------------- Esitystavat
+
+    x = 10
+    y = ensimmainen_rivi
+
+	UI_OUTFIELD "Käytä esitystavan mukaisia piirtoasetuksia", 	x, y
+		UI_INFIELD "esitystavan_mukainen", x+230,y-3, inlev,inkor
+				y=y+rivivali
+
+
+	UI_STYLE 0,1
+		UI_OUTFIELD "2D-esitys"		,x, y
+	UI_STYLE 0,0
+	y=y+rivivali
+	
+	UI_OUTFIELD		`Detaljitaso`	,x		,y
+	UI_INFIELD	"iDetlevel2D"		,x+tab	,y,inlev	,inkor
+	y=y+rivivali
+	
+	UI_OUTFIELD "Ääriviivan kynä"	,x		,y, outlev	,outkor, 4*esitystavan_mukainen
+	UI_INFIELD "gs_cont_pen"		,x+tab	,y, inlev	,inkor
+	y=y+rivivali
+	
+	UI_OUTFIELD "Ääriviivan tyyppi"	,x		,y, outlev	,outkor, 4*esitystavan_mukainen
+	UI_INFIELD "gs_line_type"		,x+tab	,y, inlev	,inkor
+	y=y+rivivali
+	
+	UI_OUTFIELD "Symbolin täyte"	,x		,y, outlev	,outkor, 4*esitystavan_mukainen
+	UI_INFIELD "gs_fill"			,x+tab	,y, inlev	,inkor
+	y=y+rivivali
+	
+	!IF gs_fill THEN
+	
+	UI_OUTFIELD "Täytteen tyyppi"	,x		,y, outlev	,outkor, 4*(not(gs_fill) or esitystavan_mukainen)
+	UI_INFIELD "gs_fill_type"		,x+tab	,y, inlev	,inkor
+	y=y+rivivali
+	
+	UI_OUTFIELD "Täytteen kynä"		,x		,y, outlev	,outkor, 4*(not(gs_fill) or esitystavan_mukainen)
+	UI_INFIELD "gs_fill_pen"		,x+tab	,y, inlev	,inkor
+	y=y+rivivali
+	
+	UI_OUTFIELD "Täytteen taustakynä",x	,y, outlev	,outkor, 4*(not(gs_fill) or esitystavan_mukainen)
+	UI_INFIELD "gs_back_pen"		,x+tab	,y, inlev	,inkor
+	y=y+rivivali
+	
+	!ENDIF
+	
+	x = 444/2
+	y = ensimmainen_rivi + rivivali
+	
+	ui_style 0,1
+		ui_outfield "3D-esitys"		,x, y
+	ui_style 0,0
+	y=y+rivivali
+	
+	ui_outfield		`Detaljitaso `	,x		,y,outlev	,outkor
+	ui_infield	"iDetlevel3D"		,x+tab	,y,inlev	,inkor
+	y=y+rivivali
+	
+	
+	UI_OUTFIELD "Ääriviivan kynä"	,x		,y, outlev	,outkor, 4*esitystavan_mukainen
+	UI_INFIELD "gs_view_pen"		,x+tab	,y, inlev	,inkor
+	y=y+rivivali
+]]>
+</Script_UI>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_VL SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+! -------------- kopioi nämä oman ohjelman arvonlistaohjelmaan
+
+values{2} "iDetlevel2D"		\
+	DETLEVEL_2D_MVO,		stDetlevel3D[DETLEVEL_2D_MVO],
+	!	DETLEVEL_2D_SCSENS,		stDetlevel2D[DETLEVEL_2D_SCSENS],
+	DETLEVEL_2D_DETAILED,	stDetlevel2D[DETLEVEL_2D_DETAILED],
+	DETLEVEL_2D_SIMPLE,		stDetlevel2D[DETLEVEL_2D_SIMPLE],
+	DETLEVEL_2D_DRAFT,		stDetlevel2D[DETLEVEL_2D_DRAFT],
+	DETLEVEL_2D_SYMBOLIC,	stDetlevel2D[DETLEVEL_2D_SYMBOLIC]
+
+values{2} "iDetlevel3D"	 \
+	DETLEVEL_3D_OFF,		stDetlevel3D[DETLEVEL_3D_OFF], 
+	DETLEVEL_3D_MVO,		stDetlevel3D[DETLEVEL_3D_MVO],
+	DETLEVEL_3D_DETAILED,	stDetlevel3D[DETLEVEL_3D_DETAILED],
+	DETLEVEL_3D_SIMPLE,		stDetlevel3D[DETLEVEL_3D_SIMPLE],
+	DETLEVEL_3D_DRAFT,		stDetlevel3D[DETLEVEL_3D_DRAFT]
+
+if esitystavan_mukainen then
+	LOCK "gs_back_pen"                                                                                                        
+	LOCK "gs_cont_pen"                                                                                                        
+	LOCK "gs_fill"                                                                                                            
+	LOCK "gs_fill_pen"                                                                                                        
+	LOCK "gs_fill_type"                                                                                                       
+	LOCK "gs_line_type"      
+	LOCK "gs_view_pen"      
+endif
+]]>
+</Script_VL>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_FWM SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_FWM>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_BWM SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_BWM>
+
+<ParamSection SectVersion="27" SectionFlags="0" SubIdent="0">
+	<ParamSectHeader>
+		<AutoHotspots>false</AutoHotspots>
+		<StatBits>
+			<STBit_UIDefault/>
+			<STBit_FixSize/>
+			<STBit_UIUseHierarchicalPages/>
+		</StatBits>
+		<WDLeftFrame>0</WDLeftFrame>
+		<WDRightFrame>0</WDRightFrame>
+		<WDTopFrame>0</WDTopFrame>
+		<WDBotFrame>0</WDBotFrame>
+		<LayFlags>65535</LayFlags>
+		<WDMirrorThickness>0</WDMirrorThickness>
+		<WDWallInset>0</WDWallInset>
+	</ParamSectHeader>
+	<Parameters>
+		<Length Name="A">
+			<Description><![CDATA["Mitta 1"]]></Description>
+			<Fix/>
+			<Value>1</Value>
+		</Length>
+		<Length Name="B">
+			<Description><![CDATA["Mitta 2"]]></Description>
+			<Fix/>
+			<Value>1</Value>
+		</Length>
+		<Length Name="ZZYZX">
+			<Description><![CDATA["Korkeus"]]></Description>
+			<Fix/>
+			<Value>1</Value>
+		</Length>
+		<Integer Name="sivu">
+			<Description><![CDATA[""]]></Description>
+			<Value>1</Value>
+		</Integer>
+		<Integer Name="iDetlevel2D">
+			<Description><![CDATA[""]]></Description>
+			<Value>0</Value>
+		</Integer>
+		<Integer Name="iDetlevel3D">
+			<Description><![CDATA[""]]></Description>
+			<Value>0</Value>
+		</Integer>
+		<Boolean Name="esitystavan_mukainen">
+			<Description><![CDATA[""]]></Description>
+			<Value>0</Value>
+		</Boolean>
+		<PenColor Name="gs_cont_pen">
+			<Description><![CDATA[""]]></Description>
+			<Value>0</Value>
+		</PenColor>
+		<LineType Name="gs_line_type">
+			<Description><![CDATA[""]]></Description>
+			<Value>0</Value>
+		</LineType>
+		<Boolean Name="gs_fill">
+			<Description><![CDATA[""]]></Description>
+			<Value>0</Value>
+		</Boolean>
+		<FillPattern Name="gs_fill_type">
+			<Description><![CDATA[""]]></Description>
+			<Value>0</Value>
+		</FillPattern>
+		<PenColor Name="gs_fill_pen">
+			<Description><![CDATA[""]]></Description>
+			<Value>0</Value>
+		</PenColor>
+		<PenColor Name="gs_back_pen">
+			<Description><![CDATA[""]]></Description>
+			<Value>0</Value>
+		</PenColor>
+		<PenColor Name="gs_view_pen">
+			<Description><![CDATA[""]]></Description>
+			<Value>0</Value>
+		</PenColor>
+		<Integer Name="res">
+			<Description><![CDATA[""]]></Description>
+			<Value>0</Value>
+		</Integer>
+		<Boolean Name="rautalanka">
+			<Description><![CDATA[""]]></Description>
+			<Value>0</Value>
+		</Boolean>
+		<Boolean Name="varjot">
+			<Description><![CDATA[""]]></Description>
+			<Value>0</Value>
+		</Boolean>
+		<Boolean Name="AC_show2DHotspotsIn3D">
+			<Description><![CDATA["Näytä 2D-apupisteet 3D:ssä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>1</Value>
+		</Boolean>
+		<Length Name="ac_bottomlevel">
+			<Description><![CDATA["Alareunan korko"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>1</Value>
+		</Length>
+		<Length Name="ac_toplevel">
+			<Description><![CDATA["Yläreunan korko"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>0</Value>
+		</Length>
+	</Parameters>
+</ParamSection>
+
+<Copyright SectVersion="1" SectionFlags="0" SubIdent="0">
+	<Author></Author>
+	<License>
+		<Type>Commercial</Type>
+		<Version></Version>
+	</License>
+</Copyright>
+
+<Keywords SectVersion="1" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Keywords>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Comment SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Comment>
+
+</Symbol>

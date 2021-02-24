@@ -1,0 +1,780 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Symbol IsArchivable="false" IsPlaceable="true" MainGUID="C324A2A0-BAB9-3A49-93D5-DA1D274E9173" MigrationValue="Normal" Owner="1196638531" Signature="1196644685" Version="40">
+<Ancestry SectVersion="1" SectionFlags="0" SubIdent="0" Template="false">
+	<MainGUID>F938E33A-329D-4A36-BE3E-85E126820996</MainGUID>
+	<MainGUID>103E8D2C-8230-42E1-9597-46F84CCE28C0</MainGUID>
+	<MainGUID>C76BC373-89AE-4368-A490-BB2485825242</MainGUID>
+	<MainGUID>08059733-BE60-45A3-98C3-7F74016F24C2</MainGUID>
+</Ancestry>
+
+<CalledMacros SectVersion="2" SectionFlags="0" SubIdent="0">
+	<Macro>
+		<MName><![CDATA["Esitystapojen asetus"]]></MName>
+		<MainGUID>EFA2EC80-F677-DA45-B473-E67193D5E439</MainGUID>
+	</Macro>
+	<Macro>
+		<MName><![CDATA["Esitystapojen käyttöliittymä"]]></MName>
+		<MainGUID>2BB5F41A-81DC-014F-AE43-926904A638E6</MainGUID>
+	</Macro>
+</CalledMacros>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_3D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+pen gs_view_pen 
+
+if rautalanka then model wire
+if not(varjot) then shadow off
+
+building_material aine
+if pinta <> 0 then material pinta
+
+hotspot 0,0,0
+hotspot a,0,0
+hotspot 0,b,0
+hotspot a,b,0
+hotspot 0,0, zzyzx
+hotspot a,0, zzyzx
+hotspot 0,b, zzyzx
+hotspot a,b, zzyzx
+
+if _iDetlevel3D = DETLEVEL_3D_DETAILED or _iDetlevel3D = DETLEVEL_3D_SIMPLE then
+	aa=a
+	bb=b
+	gosub "sivu"
+	addz zzyzx
+	gosub "sivu"
+	del 1
+	
+	rotx 90
+	aa=a
+	bb=zzyzx
+	gosub "sivu"
+	addz -b
+	gosub "sivu"
+	del 1
+	
+	roty 90
+	aa=b
+	bb=zzyzx
+	gosub "sivu"
+	addz a
+	gosub "sivu"
+	del 3
+
+endif
+
+building_material aine_kivet
+if pinta_kivet <> 0 then material pinta_kivet
+
+
+if _iDetlevel3D = DETLEVEL_3D_SIMPLE or _iDetlevel3D = DETLEVEL_3D_DRAFT then
+	add .01,.01,.01 
+	block a-.02,b-.02,zzyzx-.02
+	del 1
+endif
+
+if GLOB_FEEDBACK_MODE or not(_iDetlevel3D = DETLEVEL_3D_DETAILED) then end
+
+
+if pyoreat then
+	kiven_maksimikoko = kiven_koko
+else
+	kiven_maksimikoko = sqr(3*(kiven_koko)**2)
+endif
+
+abmaara = kivia * a*b		/(a*b+b*zzyzx+a*zzyzx)
+azmaara = kivia * a*zzyzx	/(a*b+b*zzyzx+a*zzyzx)
+bzmaara = kivia * b*zzyzx	/(a*b+b*zzyzx+a*zzyzx)
+
+add kiven_maksimikoko/2, 
+	kiven_maksimikoko/2, 
+	kiven_maksimikoko/2
+
+for _k = 0 to abmaara/2
+	add rnd(a - kiven_maksimikoko), rnd(b - kiven_maksimikoko), 0
+	gosub "kivi"
+	del 1
+	add rnd(a - kiven_maksimikoko), rnd(b - kiven_maksimikoko), zzyzx-kiven_maksimikoko
+	gosub "kivi"
+	del 1
+next _k
+for _k = 0 to azmaara/2
+	add rnd(a - kiven_maksimikoko), 0					, rnd(zzyzx - kiven_maksimikoko)
+	gosub "kivi"
+	del 1
+	add rnd(a - kiven_maksimikoko), b-kiven_maksimikoko, rnd(zzyzx - kiven_maksimikoko)
+	gosub "kivi"
+	del 1
+next _k
+for _k = 0 to bzmaara/2
+	add 0					,rnd(b - kiven_maksimikoko), rnd(zzyzx - kiven_maksimikoko)
+	gosub "kivi"
+	del 1
+	add a-kiven_maksimikoko	,rnd(b - kiven_maksimikoko), rnd(zzyzx - kiven_maksimikoko)
+	gosub "kivi"
+	del 1
+next _k
+
+del 1
+
+end
+
+"sivu":
+	kokox = aa/int(aa/koko)
+	kokoy = bb/int(bb/koko)
+	for xx = 0 to aa+EPS-koko step kokox
+	for yy = 0 to bb+EPS-koko step kokoy
+		put xx+ leveys/2		, yy+ leveys/2		,1
+		put xx+ kokox-leveys/2	, yy+ leveys/2		, 1
+		put xx+ kokox-leveys/2	, yy+ kokoy-leveys/2	, 1
+		put xx+ leveys/2		, yy+ kokoy-leveys/2	,1
+		put xx+ leveys/2		, yy+ leveys/2		,-1
+	next yy!
+	next xx
+	
+	poly_ 5 + nsp/3, 
+		0	,0	,1,
+		aa	,0	,1,
+		aa	,bb	,1,
+		0	,bb	,1,
+		0,0,-1,
+		get(nsp)
+
+return
+
+
+"kivi":
+	rotx rnd(360):roty rnd(360):rotz rnd(360)
+	if pyoreat then
+		resol 3
+		sphere kiven_koko/2
+	else
+		add -kiven_koko/2,-kiven_koko/2,-kiven_koko/2
+			block kiven_koko, kiven_koko, kiven_koko
+		del 1
+	endif
+	del 3
+return 
+]]>
+</Script_3D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_2D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+line_type gs_line_type
+
+hotspot2 0,0
+hotspot2 a,0
+hotspot2 0,b
+hotspot2 a,b
+
+project2 3,270,2
+
+!if _iDetlevel2D = DETLEVEL_2D_SCSENS	then
+
+if _iDetlevel2D = DETLEVEL_2D_SYMBOLIC or _iDetlevel2D = DETLEVEL_2D_DRAFT or _iDetlevel2D = DETLEVEL_2D_SIMPLE	then
+endif
+
+if _iDetlevel2D = DETLEVEL_2D_SIMPLE	then
+endif
+
+if _iDetlevel2D = DETLEVEL_2D_SYMBOLIC	then
+endif
+
+
+if _iDetlevel2D = DETLEVEL_2D_DETAILED then
+endif
+]]>
+</Script_2D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_1D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+EPS = 0.0001
+
+
+! -------------------------- Esitystavat
+
+DETLEVEL_2D_MVO			= 1
+DETLEVEL_2D_SCSENS		= 2
+DETLEVEL_2D_DETAILED	= 3
+DETLEVEL_2D_SIMPLE		= 4
+DETLEVEL_2D_DRAFT		= 5
+DETLEVEL_2D_SYMBOLIC	= 6
+DETLEVEL_3D_MVO			= 1
+DETLEVEL_3D_SCSENS		= 2	! Unused
+DETLEVEL_3D_DETAILED	= 3
+DETLEVEL_3D_SIMPLE		= 4
+DETLEVEL_3D_DRAFT		= 5
+DETLEVEL_3D_OFF			= 6
+
+dim stDetlevel2D[]
+	stDetlevel2D[1]	= `Esitystavan mukaan`
+	stDetlevel2D[2]	= `Mittakaavassa`
+	stDetlevel2D[3]	= `Täysi`
+	stDetlevel2D[4]	= `Keskitaso`
+	stDetlevel2D[5]	= `Matala`
+	stDetlevel2D[6]	= `Symboli`
+dim stDetlevel3D[]
+	stDetlevel3D[1]	= `Esitystavan mukaan`
+	!	stDetlevel3D[2]	= `Mittakaavassa`
+	stDetlevel3D[3]	= `Täysi`
+	stDetlevel3D[4]	= `Yksinkertaistettu`
+	stDetlevel3D[5]	= `Kaaviomainen`
+	stDetlevel3D[6]	= `Pois`
+
+
+_iDetlevel2D= iDetlevel2D
+_iDetlevel3D= iDetlevel2D
+call "Esitystapojen asetus" parameters all returned_parameters \
+	_iDetlevel2D,	_iDetlevel3D,
+	gs_cont_pen,	gs_line_type,
+	gs_fill,	gs_fill_type,	gs_fill_pen,	gs_back_pen,	gs_view_pen, res, rautalanka, varjot
+	
+	
+
+
+
+]]>
+</Script_1D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_PR SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_PR>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_UI SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+
+
+UI_DIALOG "Kivikorin asetukset"
+
+sivu = 0
+rivivali = 22
+ensimmainen_rivi = 20
+tab = 444/3-10
+inlev = tab-10
+inkor = rivivali-3
+outlev = inlev
+outkor = inkor
+nudge = 3
+ 
+sivu = sivu+1
+UI_PAGE sivu, -1, "Asetukset", "" ! ----------------------------- Asetukset
+    x = 10
+    y = ensimmainen_rivi
+
+    UI_OUTFIELD "Verkon silmien koko noin:",     x, y
+        UI_INFIELD "koko", x+tab,y-nudge, inlev,inkor
+                y=y+rivivali
+
+    UI_OUTFIELD "Verkon leveys:",     x, y
+        UI_INFIELD "leveys", x+tab,y-nudge, inlev,inkor
+                y=y+rivivali
+
+    ui_separator 10,y-2,444-10,y-2 : y=y+rivivali/3 ! ---------- sep
+
+    UI_OUTFIELD "Kivien muoto:",     x, y
+        UI_INFIELD "pyoreat", x+tab,y-nudge, inlev,inkor
+                y=y+rivivali
+
+    UI_OUTFIELD "Kivia:",     x, y
+        UI_INFIELD "kivia", x+tab,y-nudge, inlev,inkor
+                y=y+rivivali
+
+    UI_OUTFIELD "Kiven koko:",     x, y
+        UI_INFIELD "kiven_koko", x+tab,y-nudge, inlev,inkor
+                y=y+rivivali
+
+
+   ! parametri: kokonaisluku
+   ! arvolista: values{​​​​​​​​2}​​​​​​​​ "luettelomuuttuja" 1, "ykkönen", 2, "kakkonen"
+!    UI_INFIELD{​​​​​​​​​​​4}​​​​​​​​​​​​​​​​​​ luettelomuuttuja, x+tab, y-nudge, inlev, linespace-2 ,
+!              2, "",0,0, 0, 0,             50, 50,
+!            0, "ykkönen",  1 , 
+!            0, "kakkonen",  2 
+
+
+sivu = sivu+1
+call "Esitystapojen käyttöliittymä" parameters all sivu=sivu, esitystavan_mukainen= esitystavan_mukainen! ----------------------------- Esitystavat
+
+
+sivu = sivu+1
+UI_PAGE sivu, -1, "Materiaalit", "" ! ----------------------------- Materiaalit
+
+    x = 10
+    y = ensimmainen_rivi
+
+tab = 444/3-10
+inlev = tab-10
+inkor = rivivali-3
+outlev = inlev
+outkor = inkor
+
+	UI_OUTFIELD "Rungon rakennusaine:"	,x		,y
+	UI_INFIELD "aine"		,x+tab	,y, inlev*1.5	,inkor
+	y=y+rivivali
+
+	UI_OUTFIELD "Rungon pinta:"	,x		,y	
+	UI_INFIELD "pinta"		,x+tab	,y, inlev*1.5	,inkor
+	y=y+rivivali
+
+	UI_OUTFIELD "Kivien rakennusaine:"	,x		,y	
+	UI_INFIELD "aine_kivet"		,x+tab	,y, inlev*1.5	,inkor
+	y=y+rivivali
+
+	UI_OUTFIELD "Kivien pinta:"	,x		,y
+	UI_INFIELD "pinta_kivet"		,x+tab	,y, inlev*1.5	,inkor
+	y=y+rivivali
+
+
+
+
+
+end
+
+]]>
+</Script_UI>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_VL SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+
+values{2} "pyoreat" 0, "Kuutiomaiset", 1, "Pyöreät"
+
+values{2} "iDetlevel2D"		\
+	DETLEVEL_2D_MVO,		stDetlevel3D[DETLEVEL_2D_MVO],
+	!	DETLEVEL_2D_SCSENS,		stDetlevel2D[DETLEVEL_2D_SCSENS],
+	DETLEVEL_2D_DETAILED,	stDetlevel2D[DETLEVEL_2D_DETAILED],
+	DETLEVEL_2D_SIMPLE,		stDetlevel2D[DETLEVEL_2D_SIMPLE],
+	DETLEVEL_2D_DRAFT,		stDetlevel2D[DETLEVEL_2D_DRAFT],
+	DETLEVEL_2D_SYMBOLIC,	stDetlevel2D[DETLEVEL_2D_SYMBOLIC]
+
+values{2} "iDetlevel3D"	 \
+	DETLEVEL_3D_OFF,		stDetlevel3D[DETLEVEL_3D_OFF], 
+	DETLEVEL_3D_MVO,		stDetlevel3D[DETLEVEL_3D_MVO],
+	DETLEVEL_3D_DETAILED,	stDetlevel3D[DETLEVEL_3D_DETAILED],
+	DETLEVEL_3D_SIMPLE,		stDetlevel3D[DETLEVEL_3D_SIMPLE],
+	DETLEVEL_3D_DRAFT,		stDetlevel3D[DETLEVEL_3D_DRAFT]
+
+
+! -------------------------- Esitystavat
+
+call "Esitystapojen asetus" parameters all
+
+if esitystavan_mukainen then
+	LOCK "gs_back_pen"                                                                                                        
+	LOCK "gs_cont_pen"                                                                                                        
+	LOCK "gs_fill"                                                                                                            
+	LOCK "gs_fill_pen"                                                                                                        
+	LOCK "gs_fill_type"                                                                                                       
+	LOCK "gs_line_type"      
+	LOCK "gs_view_pen"      
+endif
+
+values "gs_cont_pen" range[1,255]
+values "gs_fill_pen" range[1,255]
+values "gs_view_pen" range[1,255]
+]]>
+</Script_VL>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_FWM SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_FWM>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_BWM SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_BWM>
+
+<ParamSection SectVersion="27" SectionFlags="0" SubIdent="0">
+	<ParamSectHeader>
+		<AutoHotspots>false</AutoHotspots>
+		<StatBits>
+			<STBit_UIDefault/>
+			<STBit_FixSize/>
+			<STBit_UIUseHierarchicalPages/>
+		</StatBits>
+		<WDLeftFrame>0</WDLeftFrame>
+		<WDRightFrame>0</WDRightFrame>
+		<WDTopFrame>0</WDTopFrame>
+		<WDBotFrame>0</WDBotFrame>
+		<LayFlags>65535</LayFlags>
+		<WDMirrorThickness>0</WDMirrorThickness>
+		<WDWallInset>0</WDWallInset>
+	</ParamSectHeader>
+	<Parameters>
+		<Length Name="A">
+			<Description><![CDATA["Leveys"]]></Description>
+			<Fix/>
+			<Value>1</Value>
+		</Length>
+		<Length Name="B">
+			<Description><![CDATA["Syvyys"]]></Description>
+			<Fix/>
+			<Value>0.5</Value>
+		</Length>
+		<Length Name="ZZYZX">
+			<Description><![CDATA["Korkeus"]]></Description>
+			<Fix/>
+			<Value>0.5</Value>
+		</Length>
+		<Length Name="koko">
+			<Description><![CDATA["Verkon silmän koko noin"]]></Description>
+			<Value>0.1</Value>
+		</Length>
+		<Length Name="leveys">
+			<Description><![CDATA["Verkon leveys"]]></Description>
+			<Value>0.01</Value>
+		</Length>
+		<Integer Name="pyoreat">
+			<Description><![CDATA["Kivien muoto"]]></Description>
+			<Value>0</Value>
+		</Integer>
+		<Integer Name="kivia">
+			<Description><![CDATA["Kiviä"]]></Description>
+			<Value>100</Value>
+		</Integer>
+		<Length Name="kiven_koko">
+			<Description><![CDATA["Kiven koko"]]></Description>
+			<Value>0.1</Value>
+		</Length>
+		<Boolean Name="AC_show2DHotspotsIn3D">
+			<Description><![CDATA["Näytä 2D-apupisteet 3D:ssä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>1</Value>
+		</Boolean>
+		<Length Name="ac_bottomlevel">
+			<Description><![CDATA["Alareunan korko"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>0.2</Value>
+		</Length>
+		<Length Name="ac_toplevel">
+			<Description><![CDATA["Yläreunan korko"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>0</Value>
+		</Length>
+		<String Name="tunnus">
+			<Description><![CDATA[""]]></Description>
+			<Value><![CDATA["sdfs"]]></Value>
+		</String>
+		<String Name="opeta_tunnus">
+			<Description><![CDATA[""]]></Description>
+			<Value><![CDATA["Nimi"]]></Value>
+		</String>
+
+		<!-- gs_2D_representation: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Title Name="gs_2D_representation">
+			<Description><![CDATA["2D-esitys"]]></Description>
+			<Fix/>
+		</Title>
+		<Integer Name="iDetlevel2D">
+			<Description><![CDATA["2D LOD"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>6</Value>
+		</Integer>
+		<Boolean Name="esitystavan_mukainen">
+			<Description><![CDATA["Käytä esitystavan mukaisia"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Boolean>
+		<PenColor Name="gs_cont_pen">
+			<Description><![CDATA["Ääriviivakynä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>4</Value>
+		</PenColor>
+		<LineType Name="gs_line_type">
+			<Description><![CDATA["Ääriviivan viivatyyppi"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>1</Value>
+		</LineType>
+		<Boolean Name="gs_fill">
+			<Description><![CDATA["Näytä täyte"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Boolean>
+		<FillPattern Name="gs_fill_type">
+			<Description><![CDATA["Täytetyyppi"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>65</Value>
+		</FillPattern>
+		<PenColor Name="gs_fill_pen">
+			<Description><![CDATA["Täytekynä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>19</Value>
+		</PenColor>
+		<PenColor Name="gs_back_pen">
+			<Description><![CDATA["Täytteen taustakynä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</PenColor>
+
+		<!-- naula_sp0_A: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Title Name="naula_sp0_A">
+			<Description><![CDATA["3D-esitys"]]></Description>
+		</Title>
+		<Integer Name="iDetlevel3D">
+			<Description><![CDATA["3D LOD"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>3</Value>
+		</Integer>
+		<PenColor Name="gs_view_pen">
+			<Description><![CDATA["3D-kynä"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>1</Value>
+		</PenColor>
+		<Boolean Name="rautalanka">
+			<Description><![CDATA["Raulankamalli"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Boolean>
+		<Boolean Name="varjot">
+			<Description><![CDATA["Näytä varjot"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>1</Value>
+		</Boolean>
+		<BuildingMaterial Name="aine">
+			<Description><![CDATA["Verkon aine"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>37</Value>
+		</BuildingMaterial>
+		<Material Name="pinta">
+			<Description><![CDATA["Verkon pinta"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>11</Value>
+		</Material>
+		<BuildingMaterial Name="aine_kivet">
+			<Description><![CDATA["Kivien aine"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>39</Value>
+		</BuildingMaterial>
+		<Material Name="pinta_kivet">
+			<Description><![CDATA["Kivien pinta"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>7</Value>
+		</Material>
+
+		<!-- gs_list: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Title Name="gs_list">
+			<Description><![CDATA["Kuvaus"]]></Description>
+			<Fix/>
+		</Title>
+		<RealNum Name="gs_list_cost">
+			<Description><![CDATA["Hinta"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</RealNum>
+		<String Name="gs_list_manufacturer">
+			<Description><![CDATA["Valmistaja"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_note">
+			<Description><![CDATA["Kommentti"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_location">
+			<Description><![CDATA["Sijainti"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_accessories">
+			<Description><![CDATA["Lisävarusteet"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="FM_Type">
+			<Description><![CDATA["Tyyppi"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA["Kiinteät komerot"]]></Value>
+		</String>
+		<Integer Name="iFMType">
+			<Description><![CDATA["Tyyppi"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>15</Value>
+		</Integer>
+		<String Name="FM_InventoryNumber">
+			<Description><![CDATA["Tuotenumero"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="FM_SerialNumber">
+			<Description><![CDATA["Sarjanumero"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="FM_ProductionYear">
+			<Description><![CDATA["Valmistusvuosi"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<RealNum Name="FM_ObjectWeight">
+			<Description><![CDATA["Massa"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</RealNum>
+		<String Name="FM_ObjectWeightUnit">
+			<Description><![CDATA["Massan yksikkö"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA["kg"]]></Value>
+		</String>
+		<String Name="gs_list_custom1">
+			<Description><![CDATA["Käyttäjän määrittelemä 1"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_custom2">
+			<Description><![CDATA["Käyttäjän määrittelemä 2"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_custom3">
+			<Description><![CDATA["Käyttäjän määrittelemä 3"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_custom4">
+			<Description><![CDATA["Käyttäjän määrittelemä 4"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_custom5">
+			<Description><![CDATA["Käyttäjän määrittelemä 5"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+	</Parameters>
+</ParamSection>
+
+<Copyright SectVersion="1" SectionFlags="0" SubIdent="0">
+	<Author></Author>
+	<License>
+		<Type>Commercial</Type>
+		<Version></Version>
+	</License>
+</Copyright>
+
+<Keywords SectVersion="1" SectionFlags="0" SubIdent="0">
+<![CDATA[sauna, kiuas]]>
+</Keywords>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Comment SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Comment>
+
+</Symbol>
