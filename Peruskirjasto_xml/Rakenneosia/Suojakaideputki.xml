@@ -1,0 +1,769 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Symbol IsArchivable="false" IsPlaceable="true" MainGUID="2AC730BF-5727-BE4C-BF8E-C6476346FF92" MigrationValue="Normal" Owner="1196638531" Signature="1196644685" Version="40">
+<Ancestry SectVersion="1" SectionFlags="0" SubIdent="0" Template="false">
+	<MainGUID>F938E33A-329D-4A36-BE3E-85E126820996</MainGUID>
+	<MainGUID>103E8D2C-8230-42E1-9597-46F84CCE28C0</MainGUID>
+	<MainGUID>84E50B69-6FB6-4909-AC3D-E01EECBE3328</MainGUID>
+</Ancestry>
+
+<CalledMacros SectVersion="2" SectionFlags="0" SubIdent="0">
+	<Macro>
+		<MName><![CDATA["Esitystapojen asetus"]]></MName>
+		<MainGUID>EFA2EC80-F677-DA45-B473-E67193D5E439</MainGUID>
+	</Macro>
+	<Macro>
+		<MName><![CDATA["Esitystapojen käyttöliittymä"]]></MName>
+		<MainGUID>2BB5F41A-81DC-014F-AE43-926904A638E6</MainGUID>
+	</Macro>
+</CalledMacros>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_3D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+building_material aine
+material pinta
+if not(varjot) then shadow off
+
+addz -ZZYZX
+
+hotspot -A/2,-B/2,0
+hotspot -A/2,B/2,0
+hotspot A/2,-B/2,0
+hotspot A/2,B/2,0
+hotspot -A/2,-B/2,ZZYZX
+hotspot -A/2,B/2 ,ZZYZX
+hotspot A/2,-B/2 ,ZZYZX
+hotspot A/2,B/2 ,ZZYZX
+
+
+if GLOB_SEO_TOOL_MODE then
+	add -A/2, -B/2, 0
+	block A,B,ZZYZX+0.0001
+	del 1
+	end
+endif
+
+if kaidetolppa then
+	if kaidemat<>0 then material kaidemat
+	add -0.04/2, -0.04/2, 0
+	block 0.04,0.04, ZZYZX + 1.100
+	del 1
+endif
+
+material pinta
+
+! ---- poikittaistanko
+
+if poikittaistanko then
+	addy B/2
+	HOTSPOT 0, 0,0							, unId, poikittaistangon_korkeus, 1+128	:unId=unId+1	! base
+	HOTSPOT 0, 0,-1							, unId, poikittaistangon_korkeus, 3		:unId=unId+1	! ref
+	HOTSPOT 0, 0, poikittaistangon_korkeus	, unId, poikittaistangon_korkeus, 2		:unId=unId+1	! moving
+	del 1 
+
+	rotz 90
+	addz poikittaistangon_korkeus 
+	addx B/2 + 0.006/2
+	rotx 90
+	addz -0.3/2
+	cylind 0.3, 0.006/2
+	del 5
+endif
+
+! ---- itse putki
+
+_width = A
+_height = B
+_r=0.005
+_h = ZZYZX
+_thk = paksuus
+gosub "rounded rectangle"
+
+! ---- ankkurit
+
+if ankkureita > 0 then
+	rotz 90
+	addx B/2
+	addz ankkuri_alhaalta
+	
+	HOTSPOT 0, 0,0				, unId, ankkuritemp, 1+128	:unId=unId+1	! base
+	HOTSPOT 0, 0,-1				, unId, ankkuritemp, 3		:unId=unId+1	! ref
+	HOTSPOT 0, 0, ankkuritemp	, unId, ankkuritemp, 2		:unId=unId+1	! moving
+	
+	HOTSPOT 0, 0,0						, unId, ankkurivali, 1+128	:unId=unId+1	! base
+	HOTSPOT 0, 0,-1						, unId, ankkurivali, 3		:unId=unId+1	! ref
+	HOTSPOT 0, 0,ankkurivali	, unId, ankkurivali, 2		:unId=unId+1	! moving
+	
+	for ank=0 to ankkureita-1
+		addz ank*ankkurivali
+		gosub "ankkuri"
+		del 1
+	next ank
+	del 3
+endif
+
+! ---- alatanko
+
+if alatanko then
+	addz -0.0075/2
+	roty 90
+	addz -(A+0.01*2)/2
+	cylind A+0.01*2 , 0.0075/2
+	del 3
+endif
+
+end ! -----------------------------
+
+"ankkuri":
+	halkaisija = 0.01
+	addx ankkurin_pituus
+	rotz 180
+	revolve 5, 360,0,
+		0,0,0,
+		0			, halkaisija,0,
+		halkaisija/4, halkaisija,0,
+		halkaisija/2, halkaisija/2,0,
+		ankkurin_pituus 		, halkaisija/2,0
+	del 2
+return
+
+
+"rounded rectangle":
+!_width, _height, _r, _h, _thk
+!print _top_material, _bottom_material, _side_material
+	PRISM_		10*2, _h,
+		-_width/2+_r	, _height/2		, 64+15,
+		 _width/2-_r	, _height/2		, 64+15,	_r, -90, 2000+64+15, ! oikea yläkulma
+		 _width/2		, -_height/2+_r	, 64+15, 	_r, -90, 2000+64+15, ! oikea alakulma
+		-_width/2+_r	, -_height/2	, 64+15, 	_r, -90, 2000+64+15, ! vasen alakulma
+		 -_width/2		, _height/2-_r	, 64+15,	_r, -90, 2000+64+15, ! vasen yläkulma
+		0,0,-1,
+		-_width/2+_r 		, _height/2	-_thk	, 64+15,
+		 _width/2-_r 		, _height/2 -_thk	, 64+15,	_r -_thk, -90, 2000+64+15, ! oikea yläkulma
+		 _width/2 -_thk		, -_height/2+_r		, 64+15, 	_r -_thk, -90, 2000+64+15, ! oikea alakulma
+		-_width/2+_r		, -_height/2+_thk	, 64+15, 	_r -_thk, -90, 2000+64+15, ! vasen alakulma
+		 -_width/2	+_thk	, _height/2-_r 		, 64+15,	_r -_thk, -90, 2000+64+15, ! vasen yläkulma
+		0,0,-1
+return 
+]]>
+</Script_3D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_2D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+hotspot2 0,0
+
+hotspot2 -A/2,-B/2
+hotspot2 -A/2,B/2
+hotspot2 A/2,-B/2
+hotspot2 A/2,B/2
+
+if ankkureita > 0 then hotspot2 0,B/2+ ankkurin_pituus
+
+line_type gs_line_type
+if gs_fill then
+	pen gs_fill_pen
+	fill gs_fill_type
+	project2{3} 3,270,3+32,4   ,gs_back_pen,0,0,0
+endif
+pen gs_cont_pen
+project2{2} 3,270,2 + 32
+]]>
+</Script_2D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_1D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+unID = 24853
+call "Esitystapojen asetus" parameters all returned_parameters \
+	foo,foo,
+	gs_cont_pen,	gs_line_type,
+	gs_fill,	gs_fill_type,	gs_fill_pen,	gs_back_pen,	gs_view_pen, foo,foo,foo
+
+
+if GLOB_MODPAR_NAME = "tuote" and not(tuote = "Omat mitat") then
+
+	A=0.05
+	B=0.05
+	paksuus = 0.003
+	ankkureita = 2
+	ankkuri_alhaalta = 0.02
+	ankkurivali= 0.100
+	poikittaistanko = 0
+	poikittaistangon_korkeus=0.45
+	alatanko = 0
+	ankkurin_pituus = 0.063
+	
+	if tuote = "KAPU®-202" then  
+		alatanko = 1
+		ankkureita = 2
+		ankkuri_alhaalta = 0.05
+		ZZYZX= 0.2                                                                                           
+	endif                                                                                                                   
+	if tuote = "KAPU®-602" then                                                                                             
+		ankkureita = 2
+		ZZYZX= 0.6                                                                                           
+	endif                                                                                                                   
+	if tuote = "KAPU®-602+" then     
+		poikittaistanko = 1                                                                                        
+		ankkureita = 2
+		ZZYZX= 0.6                                                                                           
+	endif                                                                                                                   
+	if tuote = "KAPU®-403" then                                                                                             
+		ankkureita = 3
+		ZZYZX= 0.4                                                                                           
+	endif                                                                                                                   
+	if tuote = "KAPU®-503" then                                                                                             
+		ankkureita = 3
+		ZZYZX= 0.5                                                                                           
+	endif                                                                                                                   
+	if tuote = "KAPU®-603" then                                                                                             
+		ankkureita = 3
+		ZZYZX= 0.6                                                                                           
+	endif                                                                                                                   
+	if tuote = "KAPU®-703" then                                                                                             
+		ankkureita = 3
+		ZZYZX= 0.7                                                                                           
+	endif                                                                                                                   
+	if tuote = "KAPU®-803" then                                                                                             
+		ankkureita = 3
+		ZZYZX= 0.8                                                                                           
+	endif                                                                                                                   
+	
+	parameters zzyzx=zzyzx, poikittaistanko = poikittaistanko, poikittaistangon_korkeus = poikittaistangon_korkeus ,alatanko = alatanko, 
+			ankkureita = ankkureita, ankkuri_alhaalta= ankkuri_alhaalta, ankkurivali=ankkurivali, paksuus=paksuus , ankkurin_pituus= ankkurin_pituus
+endif
+
+
+if GLOB_MODPAR_NAME = "ankkuritemp" then
+	ankkureita = ankkuritemp/ankkurivali
+	parameters ankkureita = ankkureita
+endif
+]]>
+</Script_1D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_PR SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_PR>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_UI SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+sivu = 0
+rivivali = 22
+tab = (444-2*10)/4-10
+inlev = tab
+inkor = rivivali-3
+
+sivu = sivu+1
+ui_page sivu, -1, "Asetukset", "" ! ----------------------------- Asetukset
+	x=10
+	y=20
+	UI_OUTFIELD "Malli", 	x, y
+		UI_INFIELD "tuote", x+tab,y, inlev,inkor
+				y=y+rivivali
+
+
+	UI_OUTFIELD "Leveys", 	x, y
+		UI_INFIELD "A", x+tab,y, inlev,inkor
+				y=y+rivivali
+	UI_OUTFIELD "Syvyys", 	x, y
+		UI_INFIELD "B", x+tab,y, inlev,inkor
+				y=y+rivivali
+	UI_OUTFIELD "Korkeus", 	x, y
+		UI_INFIELD "ZZYZX", x+tab,y, inlev,inkor
+				y=y+rivivali
+
+	UI_OUTFIELD "Paksuus", 	x, y
+		UI_INFIELD "paksuus", x+tab,y, inlev,inkor
+				y=y+rivivali
+				y=y+rivivali
+
+				y=y+rivivali
+
+	UI_OUTFIELD "Rakennusaine", 	x, y
+		UI_INFIELD "aine", x+tab,y, inlev*2,inkor
+				y=y+rivivali
+	UI_OUTFIELD "Pinnoite", 	x, y
+		UI_INFIELD "pinta", x+tab,y, inlev*2,inkor
+				y=y+rivivali
+
+	UI_OUTFIELD "Näytä tolppa", 	x, y
+		UI_INFIELD "kaidetolppa", x+tab,y, inlev,inkor
+				y=y+rivivali
+	UI_OUTFIELD "Tolpan pinta", 	x+ 0.25*tab, y
+		UI_INFIELD "kaidemat", x+tab,y, inlev*2,inkor
+				y=y+rivivali
+
+
+x=444/2
+y=20
+
+
+	UI_OUTFIELD "Poikittainen harjateräs", 	x, y
+		UI_INFIELD "poikittaistanko", x+1.5*tab,y, 20,20
+				y=y+rivivali
+	UI_OUTFIELD "Asema", 	x+0.25*Tab, y
+		UI_INFIELD "poikittaistangon_korkeus", x+tab,y, inlev,inkor
+				y=y+rivivali
+
+	UI_OUTFIELD "Ankkureita", 	x, y
+		UI_INFIELD "ankkureita", x+tab,y, inlev,inkor
+				y=y+rivivali
+	UI_OUTFIELD "Pituus", 	x+0.25*tab, y
+		UI_INFIELD "ankkurin_pituus", x+tab,y, inlev,inkor
+				y=y+rivivali
+	UI_OUTFIELD "Asema", 	x+ 0.25*tab, y
+		UI_INFIELD "ankkuri_alhaalta", x+tab,y, inlev,inkor
+				y=y+rivivali
+	UI_OUTFIELD "Väli", 	x+ 0.25*tab, y
+		UI_INFIELD "ankkurivali", x+tab,y, inlev,inkor
+				y=y+rivivali
+
+	UI_OUTFIELD "Tanko pohjassa", 	x, y
+		UI_INFIELD "alatanko", x+tab,y, 22,22
+				y=y+rivivali
+
+
+sivu = sivu+1
+call "Esitystapojen käyttöliittymä" parameters all sivu=sivu, nayta_lod = 0, nayta_taytteet = 1, nayta_rautalanka = 0, esitystavan_mukainen=esitystavan_mukainen ! ----------------------------- Esitystavat
+]]>
+</Script_UI>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_VL SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+
+VALUES "ankkuritemp"  RANGE[0,ZZYZX) STEP 0, ankkurivali
+
+
+values "tuote" \
+	"KAPU®-202" ,                                                                                   
+	"KAPU®-602" ,                                                                        
+	"KAPU®-602+",                                                              
+	"KAPU®-403" ,                                                                        
+	"KAPU®-503" ,                                                                                    
+	"KAPU®-603" ,                                                                                    
+	"KAPU®-703" ,                                                                                  
+	"KAPU®-803" ,
+	"Omat mitat"                                                                         
+
+
+if not(tuote = "Omat mitat") then
+	lock "A","B","ZZYZX","ankkureita", "poikittaistanko","alatanko",
+			"ankkuri_alhaalta","poikittaistangon_korkeus","paksuus","ankkurivali", "ankkuritemp","ankkurin_pituus"
+endif
+
+if ankkureita = 0 then	lock 	"ankkuri_alhaalta","ankkurivali", "ankkuritemp","ankkurin_pituus"
+if ankkureita = 1 then	lock 	"ankkurivali"
+
+if not(poikittaistanko) then lock "poikittaistangon_korkeus"
+
+if not(kaidetolppa) then lock "kaidemat"
+]]>
+</Script_VL>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_FWM SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_FWM>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_BWM SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_BWM>
+
+<ParamSection SectVersion="27" SectionFlags="0" SubIdent="0">
+	<ParamSectHeader>
+		<AutoHotspots>false</AutoHotspots>
+		<StatBits>
+			<STBit_UIDefault/>
+			<STBit_FixSize/>
+			<STBit_UIUseHierarchicalPages/>
+		</StatBits>
+		<WDLeftFrame>0</WDLeftFrame>
+		<WDRightFrame>0</WDRightFrame>
+		<WDTopFrame>0</WDTopFrame>
+		<WDBotFrame>0</WDBotFrame>
+		<LayFlags>65535</LayFlags>
+		<WDMirrorThickness>0</WDMirrorThickness>
+		<WDWallInset>0</WDWallInset>
+	</ParamSectHeader>
+	<Parameters>
+		<Length Name="A">
+			<Description><![CDATA["Leveys"]]></Description>
+			<Fix/>
+			<Value>0.05</Value>
+		</Length>
+		<Length Name="B">
+			<Description><![CDATA["Syvyys"]]></Description>
+			<Fix/>
+			<Value>0.05</Value>
+		</Length>
+		<Length Name="ZZYZX">
+			<Description><![CDATA["Korkeus"]]></Description>
+			<Fix/>
+			<Value>0.2</Value>
+		</Length>
+		<String Name="tuote">
+			<Description><![CDATA["Malli"]]></Description>
+			<Value><![CDATA["KAPU®-202"]]></Value>
+		</String>
+		<Length Name="paksuus">
+			<Description><![CDATA["Teräksen paksuus"]]></Description>
+			<Value>0.003</Value>
+		</Length>
+		<BuildingMaterial Name="aine">
+			<Description><![CDATA["Rakennusaine"]]></Description>
+			<Value>36</Value>
+		</BuildingMaterial>
+		<Material Name="pinta">
+			<Description><![CDATA["Pinta"]]></Description>
+			<Value>47</Value>
+		</Material>
+
+		<!-- kaidetolppa: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Boolean Name="kaidetolppa">
+			<Description><![CDATA["Näytä tolppa"]]></Description>
+			<Flags>
+				<ParFlg_BoldName/>
+			</Flags>
+			<Value>0</Value>
+		</Boolean>
+		<Material Name="kaidemat">
+			<Description><![CDATA["Tolpan pinta"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>24</Value>
+		</Material>
+
+		<!-- poikittaistanko: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Boolean Name="poikittaistanko">
+			<Description><![CDATA["Poikittainen harjateräs"]]></Description>
+			<Flags>
+				<ParFlg_BoldName/>
+			</Flags>
+			<Value>0</Value>
+		</Boolean>
+		<Length Name="poikittaistangon_korkeus">
+			<Description><![CDATA["Asema"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0.45</Value>
+		</Length>
+		<Boolean Name="alatanko">
+			<Description><![CDATA["Tanko pohjassa"]]></Description>
+			<Value>1</Value>
+		</Boolean>
+		<Length Name="ankkuritemp">
+			<Description><![CDATA[""]]></Description>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>0.1</Value>
+		</Length>
+
+		<!-- ankkureita: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Integer Name="ankkureita">
+			<Description><![CDATA["Ankkureita"]]></Description>
+			<Flags>
+				<ParFlg_BoldName/>
+			</Flags>
+			<Value>2</Value>
+		</Integer>
+		<Length Name="ankkurin_pituus">
+			<Description><![CDATA["Pituus"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0.063</Value>
+		</Length>
+		<Length Name="ankkuri_alhaalta">
+			<Description><![CDATA["Asema"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0.05</Value>
+		</Length>
+		<Length Name="ankkurivali">
+			<Description><![CDATA["Väli"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0.1</Value>
+		</Length>
+		<Boolean Name="AC_show2DHotspotsIn3D">
+			<Description><![CDATA["Näytä 2D-apupisteet 3D:ssä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>0</Value>
+		</Boolean>
+		<Length Name="ac_bottomlevel">
+			<Description><![CDATA["Alareunan korko"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>1</Value>
+		</Length>
+		<Length Name="ac_toplevel">
+			<Description><![CDATA["Yläreunan korko"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>0</Value>
+		</Length>
+		<Boolean Name="esitystavan_mukainen">
+			<Description><![CDATA["Käytä esitystavan mukaisia piirtoasetuksia"]]></Description>
+			<Value>0</Value>
+		</Boolean>
+
+		<!-- gs_2D_representation: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Title Name="gs_2D_representation">
+			<Description><![CDATA["2D-esitys"]]></Description>
+			<Fix/>
+		</Title>
+		<PenColor Name="gs_cont_pen">
+			<Description><![CDATA["Ääriviivakynä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>4</Value>
+		</PenColor>
+		<LineType Name="gs_line_type">
+			<Description><![CDATA["Viiva"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>1</Value>
+		</LineType>
+		<Boolean Name="gs_fill">
+			<Description><![CDATA["Näytä täyte"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>1</Value>
+		</Boolean>
+		<FillPattern Name="gs_fill_type">
+			<Description><![CDATA["Täytetyyppi"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>65</Value>
+		</FillPattern>
+		<PenColor Name="gs_fill_pen">
+			<Description><![CDATA["Täytekynä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>19</Value>
+		</PenColor>
+		<PenColor Name="gs_back_pen">
+			<Description><![CDATA["Täytteen taustakynä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</PenColor>
+		<PenColor Name="gs_view_pen">
+			<Description><![CDATA["3D-kynä"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>1</Value>
+		</PenColor>
+		<Boolean Name="varjot">
+			<Description><![CDATA["Näytä varjot"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Boolean>
+
+		<!-- gs_list: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Title Name="gs_list">
+			<Description><![CDATA["Määrälaskenta"]]></Description>
+			<Fix/>
+		</Title>
+		<RealNum Name="gs_list_cost">
+			<Description><![CDATA["Hinta"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</RealNum>
+		<String Name="gs_list_manufacturer">
+			<Description><![CDATA["Valmistaja"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_note">
+			<Description><![CDATA["Kommentti"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_location">
+			<Description><![CDATA["Sijainti"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_accessories">
+			<Description><![CDATA["Lisävarusteet"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="FM_Type">
+			<Description><![CDATA["Tyyppi"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA["Muut"]]></Value>
+		</String>
+		<Integer Name="iFMType">
+			<Description><![CDATA["Tyyppi"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>25</Value>
+		</Integer>
+		<String Name="FM_InventoryNumber">
+			<Description><![CDATA["Tuotenumero"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="FM_SerialNumber">
+			<Description><![CDATA["Sarjanumero"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="FM_ProductionYear">
+			<Description><![CDATA["Valmistusvuosi"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<RealNum Name="FM_ObjectWeight">
+			<Description><![CDATA["Massa"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</RealNum>
+		<String Name="FM_ObjectWeightUnit">
+			<Description><![CDATA["Massan yksikkö"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA["kg"]]></Value>
+		</String>
+		<String Name="gs_list_custom1">
+			<Description><![CDATA["Käyttäjän määrittelemä 1"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_custom2">
+			<Description><![CDATA["Käyttäjän määrittelemä 2"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_custom3">
+			<Description><![CDATA["Käyttäjän määrittelemä 3"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_custom4">
+			<Description><![CDATA["Käyttäjän määrittelemä 4"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_custom5">
+			<Description><![CDATA["Käyttäjän määrittelemä 5"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+	</Parameters>
+</ParamSection>
+
+<Copyright SectVersion="1" SectionFlags="0" SubIdent="0">
+	<Author></Author>
+	<License>
+		<Type>CC0</Type>
+		<Version>1.0</Version>
+	</License>
+</Copyright>
+
+<Keywords SectVersion="1" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Keywords>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Comment SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Comment>
+
+</Symbol>

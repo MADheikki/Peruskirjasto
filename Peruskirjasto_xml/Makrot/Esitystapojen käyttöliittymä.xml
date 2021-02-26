@@ -59,10 +59,12 @@ UI_PAGE sivu, -1, "Esitystavat", "" ! ----------------------------- Esitystavat
 	UI_STYLE 0,0
 	y=y+rivivali
 	
+if nayta_lod then
 	UI_OUTFIELD		`Detaljitaso`	,x		,y
 	UI_INFIELD	"iDetlevel2D"		,x+tab	,y,inlev	,inkor
 	y=y+rivivali+ nayta_resol*rivivali
-	
+endif
+
 	UI_OUTFIELD "Käytä esitystavan mukaisia piirtoasetuksia", 	tab/2+x, y
 		UI_INFIELD "esitystavan_mukainen", tab/2+x+230,y-3, inlev,inkor
 				y=y+rivivali
@@ -90,7 +92,7 @@ UI_PAGE sivu, -1, "Esitystavat", "" ! ----------------------------- Esitystavat
 		UI_INFIELD "gs_fill_pen"		,x+tab	,y, inlev	,inkor
 		y=y+rivivali
 		
-		UI_OUTFIELD "Täytteen taustakynä",x	,y, outlev	,outkor, 4*(not(gs_fill) or esitystavan_mukainen)
+		UI_OUTFIELD "Taustan kynä",x	,y, outlev	,outkor, 4*(not(gs_fill) or esitystavan_mukainen)
 		UI_INFIELD "gs_back_pen"		,x+tab	,y, inlev	,inkor
 		y=y+rivivali
 		
@@ -105,9 +107,11 @@ UI_PAGE sivu, -1, "Esitystavat", "" ! ----------------------------- Esitystavat
 	ui_style 0,0
 	y=y+rivivali
 	
+if nayta_lod then
 	ui_outfield		`Detaljitaso `	,x		,y,outlev	,outkor
 	ui_infield	"iDetlevel3D"		,x+tab	,y,inlev	,inkor
 	y=y+rivivali
+endif
 
 	if nayta_resol then 
 		ui_outfield		`Tarkkuus`	,x		,y,outlev	,outkor
@@ -122,13 +126,17 @@ UI_PAGE sivu, -1, "Esitystavat", "" ! ----------------------------- Esitystavat
 	UI_INFIELD "gs_view_pen"		,x+tab	,y, inlev	,inkor
 	y=y+rivivali
 
+if nayta_rautalanka then
 	UI_OUTFIELD "Rautalanka"	,x		,y, outlev	,outkor, 4*esitystavan_mukainen
 	UI_INFIELD "rautalanka"		,x+tab	,y, inlev	,inkor
 	y=y+rivivali
+endif
 
+if nayta_varjot then
 	UI_OUTFIELD "Varjot"	,x		,y, outlev	,outkor, 4*esitystavan_mukainen
 	UI_INFIELD "varjot"		,x+tab	,y, inlev	,inkor
 	y=y+rivivali
+endif
 ]]>
 </Script_UI>
 
@@ -186,6 +194,10 @@ UI_PAGE sivu, -1, "Esitystavat", "" ! ----------------------------- Esitystavat
 			<Description><![CDATA[""]]></Description>
 			<Value>1</Value>
 		</Integer>
+		<Boolean Name="nayta_lod">
+			<Description><![CDATA[""]]></Description>
+			<Value>1</Value>
+		</Boolean>
 		<Boolean Name="nayta_taytteet">
 			<Description><![CDATA[""]]></Description>
 			<Value>1</Value>
@@ -193,6 +205,14 @@ UI_PAGE sivu, -1, "Esitystavat", "" ! ----------------------------- Esitystavat
 		<Boolean Name="nayta_resol">
 			<Description><![CDATA[""]]></Description>
 			<Value>0</Value>
+		</Boolean>
+		<Boolean Name="nayta_rautalanka">
+			<Description><![CDATA[""]]></Description>
+			<Value>1</Value>
+		</Boolean>
+		<Boolean Name="nayta_varjot">
+			<Description><![CDATA[""]]></Description>
+			<Value>1</Value>
 		</Boolean>
 		<Boolean Name="esitystavan_mukainen">
 			<Description><![CDATA[""]]></Description>
