@@ -1,0 +1,547 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Symbol IsArchivable="false" IsPlaceable="true" MainGUID="73663622-2A25-DA4D-BEF6-841F11779663" MigrationValue="Normal" Owner="1196638531" Signature="1196644685" Version="40">
+<Ancestry SectVersion="1" SectionFlags="0" SubIdent="0" Template="false">
+	<MainGUID>F938E33A-329D-4A36-BE3E-85E126820996</MainGUID>
+	<MainGUID>103E8D2C-8230-42E1-9597-46F84CCE28C0</MainGUID>
+	<MainGUID>84E50B69-6FB6-4909-AC3D-E01EECBE3328</MainGUID>
+</Ancestry>
+
+<CalledMacros SectVersion="2" SectionFlags="0" SubIdent="0">
+</CalledMacros>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_3D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+building_material aine
+material pinnoite 
+
+if pystytasossa then rotx 90
+
+HOTSPOT 0, 0	,0			, unId, paksuus, 1+128	:unId=unId+1	! base
+HOTSPOT 0, 0	,1			, unId, paksuus, 3		:unId=unId+1	! ref
+HOTSPOT 0, 0	,-paksuus	, unId, paksuus, 2		:unId=unId+1	! moving
+
+add -a/2,-b/2, -paksuus
+	block a, b, paksuus
+
+	HOTSPOT 0 			, b/2	,0	, unId, reunasta_x, 1+128	:unId=unId+1	! base
+	HOTSPOT -1			, b/2	,0	, unId, reunasta_x, 3		:unId=unId+1	! ref
+	HOTSPOT reunasta_x	, b/2	,0	, unId, reunasta_x, 2		:unId=unId+1	! moving
+	HOTSPOT a/2	, 0				,0	, unId, reunasta_y, 1+128	:unId=unId+1	! base
+	HOTSPOT a/2	, -1			,0	, unId, reunasta_y, 3		:unId=unId+1	! ref
+	HOTSPOT a/2	, reunasta_y	,0	, unId, reunasta_y, 2		:unId=unId+1	! moving
+
+del 1
+addz -zzyzx
+	add -a/2 + reunasta_x ,  -b/2 + reunasta_y,0 : gosub tyyppi: del 1
+	add -a/2 + reunasta_x ,   b/2 - reunasta_y,0 : gosub tyyppi: del 1
+	add  a/2 - reunasta_x ,   b/2 - reunasta_y,0 : gosub tyyppi: del 1
+	add  a/2 - reunasta_x ,  -b/2 + reunasta_y,0 : gosub tyyppi: del 1
+del 1
+
+end ! -------------- end
+
+"Suora":
+	cylind zzyzx-paksuus, halkaisija/2
+return
+
+"Levenevä":
+	roty -90
+	revolve 5, 360,0,
+		0,0,0,
+		0, halkaisija,0,
+		halkaisija/2, halkaisija,0,
+		halkaisija, halkaisija/2,0,
+		zzyzx-paksuus , halkaisija/2,0
+	del 1
+return
+
+
+]]>
+</Script_3D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_2D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+line_type gs_line_type
+if gs_fill then
+	pen gs_fill_pen
+	fill gs_fill_type
+	project2{3} 3,270,3+32,4   ,gs_back_pen,0,0,0
+endif
+pen gs_cont_pen
+project2{2} 3,270,2 + 32
+]]>
+</Script_2D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_1D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+unID = 23423
+]]>
+</Script_1D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_PR SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_PR>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_UI SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+sivunumero = 0
+rivivali = 22
+tab = (444-2*10)/3
+inlev = tab
+inkor = rivivali-3
+
+sivunumero = sivunumero+1
+ui_page sivunumero, -1, "Asetukset", "" ! ----------------------------- Asetukset
+	x=10
+	y=20
+	UI_OUTFIELD "Leveys", 	x, y
+		UI_INFIELD "A", x+tab,y, inlev,inkor
+				y=y+rivivali
+	UI_OUTFIELD "Pituus", 	x, y
+		UI_INFIELD "B", x+tab,y, inlev,inkor
+				y=y+rivivali
+	UI_OUTFIELD "Korkeus", 	x, y
+		UI_INFIELD "ZZYZX", x+tab,y, inlev,inkor
+				y=y+rivivali
+
+	UI_OUTFIELD "Paksuus", 	x, y
+		UI_INFIELD "paksuus", x+tab,y, inlev,inkor
+				y=y+rivivali
+	UI_OUTFIELD "Käännä pystytasoon", 	x, y
+		UI_INFIELD "pystytasossa", x+tab,y, inlev,inkor
+				y=y+rivivali
+	UI_OUTFIELD "Kiinnikkeet", 	x, y
+		UI_INFIELD "tyyppi", x+tab,y, inlev,inkor
+				y=y+rivivali
+x=x+tab/2
+	UI_OUTFIELD "Etäisyys sivureunoista", 	x, y
+		UI_INFIELD "reunasta_x", x+tab,y, inlev,inkor
+				y=y+rivivali
+	UI_OUTFIELD "      etu- ja takareunasta", 	x, y
+		UI_INFIELD "reunasta_y", x+tab,y, inlev,inkor
+				y=y+rivivali
+	UI_OUTFIELD "Halkaisija", 	x, y
+		UI_INFIELD "halkaisija", x+tab,y, inlev,inkor
+				y=y+rivivali
+x=x-tab/2
+
+	UI_OUTFIELD "Rakennusaine", 	x, y
+		UI_INFIELD "aine", x+tab,y, inlev,inkor
+				y=y+rivivali
+	UI_OUTFIELD "Pinnoite", 	x, y
+		UI_INFIELD "pinnoite", x+tab,y, inlev,inkor
+				y=y+rivivali
+
+sivunumero = sivunumero+1
+ui_page sivunumero, -1, "Esitystavat", "" ! ----------------------------- Esitystavat
+	x=10
+	y=20
+	tab = (444-2*10)/4
+
+!	UI_OUTFIELD "Käytä esitystavan mukaisia piirtoasetuksia", 	x, y
+!		UI_INFIELD "esitystavanmukainen", x+230,y-3, inlev,inkor
+!				y=y+rivivali
+!if not(esitystavanmukainen) then
+
+	ylatasaus = y
+	ui_style 0,1
+		ui_outfield "2D-esitys", 	x, y, outlev,outkor
+	ui_style 0,0
+	y=y+rivivali
+
+	UI_OUTFIELD "Ääriviivan kynä", 	x, y, outlev,outkor
+		UI_INFIELD "gs_cont_pen", x+tab,y, inlev,inkor
+				y=y+rivivali
+	UI_OUTFIELD "Ääriviivan tyyppi", 	x, y, outlev,outkor
+		UI_INFIELD "gs_line_type", x+tab,y, inlev,inkor
+				y=y+rivivali
+	UI_OUTFIELD "Symbolin täyte", 	x, y, outlev,outkor
+		UI_INFIELD "gs_fill", x+tab,y-3, inlev,inkor
+				y=y+rivivali
+	IF gs_fill THEN
+		UI_OUTFIELD "Täytteen tyyppi", 	x, y, outlev,outkor
+			UI_INFIELD "gs_fill_type", x+tab,y, inlev,inkor
+				y=y+rivivali
+		UI_OUTFIELD "Täytteen kynä", 	x, y, outlev,outkor
+			UI_INFIELD "gs_fill_pen", x+tab,y, inlev,inkor
+				y=y+rivivali
+		UI_OUTFIELD "Täytteen taustakynä", 	x, y, outlev,outkor
+			UI_INFIELD "gs_back_pen", x+tab,y, inlev,inkor
+				y=y+rivivali
+	ENDIF
+
+	y=ylatasaus
+	x = 444/2
+	ui_style 0,1
+		ui_outfield "3D-esitys", 	x, y, outlev,outkor
+	ui_style 0,0
+	y=y+rivivali
+	UI_OUTFIELD "Ääriviivan kynä", 	x, y, outlev,outkor
+		UI_INFIELD "gs_view_pen", x+tab,y, inlev,inkor
+				y=y+rivivali
+
+!endif
+
+]]>
+</Script_UI>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_VL SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+
+
+values "tyyppi" "Suora","Levenevä"
+
+]]>
+</Script_VL>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_FWM SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_FWM>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_BWM SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_BWM>
+
+<ParamSection SectVersion="25" SectionFlags="0" SubIdent="0">
+	<ParamSectHeader>
+		<AutoHotspots>false</AutoHotspots>
+		<StatBits>
+			<STBit_FixSize/>
+		</StatBits>
+		<WDLeftFrame>0</WDLeftFrame>
+		<WDRightFrame>0</WDRightFrame>
+		<WDTopFrame>0</WDTopFrame>
+		<WDBotFrame>0</WDBotFrame>
+		<LayFlags>65535</LayFlags>
+		<WDMirrorThickness>0</WDMirrorThickness>
+		<WDWallInset>0</WDWallInset>
+	</ParamSectHeader>
+	<Parameters>
+		<Length Name="A">
+			<Description><![CDATA["Leveys"]]></Description>
+			<Fix/>
+			<Value>0.15</Value>
+		</Length>
+		<Length Name="B">
+			<Description><![CDATA["Pituus"]]></Description>
+			<Fix/>
+			<Value>0.15</Value>
+		</Length>
+		<Length Name="ZZYZX">
+			<Description><![CDATA["Korkeus"]]></Description>
+			<Fix/>
+			<Value>0.12</Value>
+		</Length>
+		<Length Name="paksuus">
+			<Description><![CDATA["Paksuus"]]></Description>
+			<Value>0.01</Value>
+		</Length>
+		<Boolean Name="pystytasossa">
+			<Description><![CDATA["Käännä pystytasoon"]]></Description>
+			<Value>0</Value>
+		</Boolean>
+
+		<!-- tyyppi: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<String Name="tyyppi">
+			<Description><![CDATA["Kiinnikkeet"]]></Description>
+			<Flags>
+				<ParFlg_BoldName/>
+			</Flags>
+			<Value><![CDATA["Levenevä"]]></Value>
+		</String>
+		<Length Name="reunasta_x">
+			<Description><![CDATA["Etäisyys sivureunoista"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0.02</Value>
+		</Length>
+		<Length Name="reunasta_y">
+			<Description><![CDATA["Etäisyys etu- ja takareunasta"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0.02</Value>
+		</Length>
+		<Length Name="halkaisija">
+			<Description><![CDATA["Halkaisija"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0.01</Value>
+		</Length>
+		<BuildingMaterial Name="aine">
+			<Description><![CDATA["Rakennusaine"]]></Description>
+			<Value>36</Value>
+		</BuildingMaterial>
+		<Material Name="pinnoite">
+			<Description><![CDATA["Pinnoite"]]></Description>
+			<Value>47</Value>
+		</Material>
+		<Boolean Name="AC_show2DHotspotsIn3D">
+			<Description><![CDATA["Näytä 2D-apupisteet 3D:ssä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>1</Value>
+		</Boolean>
+		<Length Name="ac_bottomlevel">
+			<Description><![CDATA["Alareunan korko"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>1</Value>
+		</Length>
+		<Length Name="ac_toplevel">
+			<Description><![CDATA["Yläreunan korko"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>0</Value>
+		</Length>
+
+		<!-- gs_2D_representation: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Title Name="gs_2D_representation">
+			<Description><![CDATA["2D-esitys"]]></Description>
+			<Fix/>
+		</Title>
+		<PenColor Name="gs_cont_pen">
+			<Description><![CDATA["Ääriviivakynä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>4</Value>
+		</PenColor>
+		<LineType Name="gs_line_type">
+			<Description><![CDATA["Viiva"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>1</Value>
+		</LineType>
+		<Boolean Name="gs_fill">
+			<Description><![CDATA["Näytä täyte"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>1</Value>
+		</Boolean>
+		<FillPattern Name="gs_fill_type">
+			<Description><![CDATA["Täytetyyppi"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>65</Value>
+		</FillPattern>
+		<PenColor Name="gs_fill_pen">
+			<Description><![CDATA["Täytekynä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>19</Value>
+		</PenColor>
+		<PenColor Name="gs_back_pen">
+			<Description><![CDATA["Täytteen taustakynä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</PenColor>
+		<PenColor Name="gs_view_pen">
+			<Description><![CDATA["3D-kynä"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>1</Value>
+		</PenColor>
+
+		<!-- gs_list: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Title Name="gs_list">
+			<Description><![CDATA["Määrälaskenta"]]></Description>
+			<Fix/>
+		</Title>
+		<RealNum Name="gs_list_cost">
+			<Description><![CDATA["Hinta"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</RealNum>
+		<String Name="gs_list_manufacturer">
+			<Description><![CDATA["Valmistaja"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_note">
+			<Description><![CDATA["Kommentti"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_location">
+			<Description><![CDATA["Sijainti"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_accessories">
+			<Description><![CDATA["Lisävarusteet"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="FM_Type">
+			<Description><![CDATA["Tyyppi"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA["Muut"]]></Value>
+		</String>
+		<Integer Name="iFMType">
+			<Description><![CDATA["Tyyppi"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>25</Value>
+		</Integer>
+		<String Name="FM_InventoryNumber">
+			<Description><![CDATA["Tuotenumero"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="FM_SerialNumber">
+			<Description><![CDATA["Sarjanumero"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="FM_ProductionYear">
+			<Description><![CDATA["Valmistusvuosi"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<RealNum Name="FM_ObjectWeight">
+			<Description><![CDATA["Massa"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</RealNum>
+		<String Name="FM_ObjectWeightUnit">
+			<Description><![CDATA["Massan yksikkö"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA["kg"]]></Value>
+		</String>
+		<String Name="gs_list_custom1">
+			<Description><![CDATA["Käyttäjän määrittelemä 1"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_custom2">
+			<Description><![CDATA["Käyttäjän määrittelemä 2"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_custom3">
+			<Description><![CDATA["Käyttäjän määrittelemä 3"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_custom4">
+			<Description><![CDATA["Käyttäjän määrittelemä 4"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_custom5">
+			<Description><![CDATA["Käyttäjän määrittelemä 5"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+	</Parameters>
+</ParamSection>
+
+<Copyright SectVersion="1" SectionFlags="0" SubIdent="0">
+	<Author></Author>
+	<License>
+		<Type>CC0</Type>
+		<Version>1.0</Version>
+	</License>
+</Copyright>
+
+<Keywords SectVersion="1" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Keywords>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Comment SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Comment>
+
+</Symbol>
