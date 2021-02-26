@@ -7,6 +7,14 @@
 </Ancestry>
 
 <CalledMacros SectVersion="2" SectionFlags="0" SubIdent="0">
+	<Macro>
+		<MName><![CDATA["Esitystapojen asetus"]]></MName>
+		<MainGUID>EFA2EC80-F677-DA45-B473-E67193D5E439</MainGUID>
+	</Macro>
+	<Macro>
+		<MName><![CDATA["Esitystapojen käyttöliittymä"]]></MName>
+		<MainGUID>2BB5F41A-81DC-014F-AE43-926904A638E6</MainGUID>
+	</Macro>
 </CalledMacros>
 
 <!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
@@ -15,6 +23,7 @@
 <![CDATA[
 building_material aine
 material pinnoite 
+if not(varjot) then shadow off
 
 rotx kulma
 roty kallistus
@@ -134,6 +143,10 @@ project2{2} 3,270,2 + 32
 <Script_1D SectVersion="20" SectionFlags="0" SubIdent="0">
 <![CDATA[
 unID = 23423
+call "Esitystapojen asetus" parameters all returned_parameters \
+	foo,foo,
+	gs_cont_pen,	gs_line_type,
+	gs_fill,	gs_fill_type,	gs_fill_pen,	gs_back_pen,	gs_view_pen, foo,foo,foo
 ]]>
 </Script_1D>
 
@@ -147,14 +160,14 @@ unID = 23423
 
 <Script_UI SectVersion="20" SectionFlags="0" SubIdent="0">
 <![CDATA[
-sivunumero = 0
+sivu = 0
 rivivali = 22
 tab = (444-2*10)/4-10
 inlev = tab
 inkor = rivivali-3
 
-sivunumero = sivunumero+1
-ui_page sivunumero, -1, "Asetukset", "" ! ----------------------------- Asetukset
+sivu = sivu+1
+ui_page sivu, -1, "Asetukset", "" ! ----------------------------- Asetukset
 	x=10
 	y=20
 	UI_OUTFIELD "Leveys", 	x, y
@@ -209,57 +222,8 @@ y=20
 		UI_INFIELD "leikkauskorkeus2", x+tab,y, inlev,inkor
 				y=y+rivivali
 
-
-sivunumero = sivunumero+1
-ui_page sivunumero, -1, "Esitystavat", "" ! ----------------------------- Esitystavat
-	x=10
-	y=20
-	tab = (444-2*10)/4
-
-!	UI_OUTFIELD "Käytä esitystavan mukaisia piirtoasetuksia", 	x, y
-!		UI_INFIELD "esitystavanmukainen", x+230,y-3, inlev,inkor
-!				y=y+rivivali
-!if not(esitystavanmukainen) then
-
-	ylatasaus = y
-	ui_style 0,1
-		ui_outfield "2D-esitys", 	x, y, outlev,outkor
-	ui_style 0,0
-	y=y+rivivali
-
-	UI_OUTFIELD "Ääriviivan kynä", 	x, y, outlev,outkor
-		UI_INFIELD "gs_cont_pen", x+tab,y, inlev,inkor
-				y=y+rivivali
-	UI_OUTFIELD "Ääriviivan tyyppi", 	x, y, outlev,outkor
-		UI_INFIELD "gs_line_type", x+tab,y, inlev,inkor
-				y=y+rivivali
-	UI_OUTFIELD "Symbolin täyte", 	x, y, outlev,outkor
-		UI_INFIELD "gs_fill", x+tab,y-3, inlev,inkor
-				y=y+rivivali
-	IF gs_fill THEN
-		UI_OUTFIELD "Täytteen tyyppi", 	x, y, outlev,outkor
-			UI_INFIELD "gs_fill_type", x+tab,y, inlev,inkor
-				y=y+rivivali
-		UI_OUTFIELD "Täytteen kynä", 	x, y, outlev,outkor
-			UI_INFIELD "gs_fill_pen", x+tab,y, inlev,inkor
-				y=y+rivivali
-		UI_OUTFIELD "Täytteen taustakynä", 	x, y, outlev,outkor
-			UI_INFIELD "gs_back_pen", x+tab,y, inlev,inkor
-				y=y+rivivali
-	ENDIF
-
-	y=ylatasaus
-	x = 444/2
-	ui_style 0,1
-		ui_outfield "3D-esitys", 	x, y, outlev,outkor
-	ui_style 0,0
-	y=y+rivivali
-	UI_OUTFIELD "Ääriviivan kynä", 	x, y, outlev,outkor
-		UI_INFIELD "gs_view_pen", x+tab,y, inlev,inkor
-				y=y+rivivali
-
-!endif
-
+sivu = sivu+1
+call "Esitystapojen käyttöliittymä" parameters all sivu=sivu, nayta_lod = 0, nayta_taytteet = 1, nayta_rautalanka = 0, esitystavan_mukainen=esitystavan_mukainen ! ----------------------------- Esitystavat
 ]]>
 </Script_UI>
 
@@ -298,11 +262,13 @@ endif
 <![CDATA[]]>
 </Script_BWM>
 
-<ParamSection SectVersion="25" SectionFlags="0" SubIdent="0">
+<ParamSection SectVersion="27" SectionFlags="0" SubIdent="0">
 	<ParamSectHeader>
 		<AutoHotspots>false</AutoHotspots>
 		<StatBits>
+			<STBit_UIDefault/>
 			<STBit_FixSize/>
+			<STBit_UIUseHierarchicalPages/>
 		</StatBits>
 		<WDLeftFrame>0</WDLeftFrame>
 		<WDRightFrame>0</WDRightFrame>
@@ -407,6 +373,10 @@ endif
 			</Flags>
 			<Value>0</Value>
 		</Length>
+		<Boolean Name="esitystavan_mukainen">
+			<Description><![CDATA["Käytä esitystavan mukaisia piirtoasetuksia"]]></Description>
+			<Value>0</Value>
+		</Boolean>
 
 		<!-- gs_2D_representation: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
 
@@ -467,6 +437,13 @@ endif
 			</Flags>
 			<Value>1</Value>
 		</PenColor>
+		<Boolean Name="varjot">
+			<Description><![CDATA["Näytä varjot"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Boolean>
 
 		<!-- gs_list: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
 
