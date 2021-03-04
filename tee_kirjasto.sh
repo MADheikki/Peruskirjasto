@@ -15,6 +15,7 @@ alias LP_XMLConverter24="/Applications/GRAPHISOFT/ARCHICAD\ 24/ARCHICAD\ 24.app/
 LP_XMLConverter23 l2x "$KIRJASTON_HAKEMISTO" temp_xml
 LP_XMLConverter23 x2l -password $SALASANA temp_xml "$ALIHAKEMISTON_NIMI"
 
-LP_XMLConverter23 createcontainer "Peruskirjasto 24 $(date +"%Y-%m-%d").lcf" "$ALIHAKEMISTON_NIMI"
+LP_XMLConverter23 createcontainer "Peruskirjasto 23 $(date +"%Y-%m-%d").lcf" "$ALIHAKEMISTON_NIMI"
+LP_XMLConverter24 createcontainer "Peruskirjasto 24 $(date +"%Y-%m-%d").lcf" "$ALIHAKEMISTON_NIMI"
 
 rm -r temp_xml "$ALIHAKEMISTON_NIMI"
