@@ -1,0 +1,252 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Symbol IsArchivable="false" IsPlaceable="true" MainGUID="1C5759C7-3178-1F45-B52D-F429706898A5" MigrationValue="Normal" Owner="1196638531" Signature="1196644685" Version="40">
+<Ancestry SectVersion="1" SectionFlags="0" SubIdent="0" Template="false">
+	<MainGUID>F938E33A-329D-4A36-BE3E-85E126820996</MainGUID>
+	<MainGUID>103E8D2C-8230-42E1-9597-46F84CCE28C0</MainGUID>
+	<MainGUID>5F9A4C89-F8C9-42D6-AEB5-EA5927E29A32</MainGUID>
+	<MainGUID>032E46F4-426A-4994-811C-741D63D1D3E7</MainGUID>
+</Ancestry>
+
+<CalledMacros SectVersion="2" SectionFlags="0" SubIdent="0">
+</CalledMacros>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_3D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+
+building_material aine
+if pinta <> 0 then material pinta
+
+if iDetlevel3D = DETLEVEL_3D_OFF then
+	end
+endif
+
+if iDetlevel3D = DETLEVEL_3D_SIMPLE or iDetlevel3D = DETLEVEL_3D_DRAFT then
+	block a, b, zzyzx
+	end
+endif
+
+block a, b, zzyzx-huulloksen_paksuus
+
+add -huulloksen_leveys, -huulloksen_leveys, -huulloksen_paksuus
+
+block a+2* huulloksen_leveys, b+2* huulloksen_leveys, huulloksen_paksuus
+
+del 1
+]]>
+</Script_3D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_2D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+project2 3, 270, 2
+]]>
+</Script_2D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_1D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+! -------------------------- Esitystavat
+
+DETLEVEL_2D_MVO			= 1
+DETLEVEL_2D_SCSENS		= 2
+DETLEVEL_2D_DETAILED	= 3
+DETLEVEL_2D_SIMPLE		= 4
+DETLEVEL_2D_DRAFT		= 5
+DETLEVEL_2D_SYMBOLIC	= 6
+DETLEVEL_3D_MVO			= 1
+DETLEVEL_3D_SCSENS		= 2	! Unused
+DETLEVEL_3D_DETAILED	= 3
+DETLEVEL_3D_SIMPLE		= 4
+DETLEVEL_3D_DRAFT		= 5
+DETLEVEL_3D_OFF			= 6
+
+dim stDetlevel2D[]
+	stDetlevel2D[1]	= `Esitystavan mukaan`
+	stDetlevel2D[2]	= `Mittakaavassa`
+	stDetlevel2D[3]	= `Täysi`
+	stDetlevel2D[4]	= `Keskitaso`
+	stDetlevel2D[5]	= `Matala`
+	stDetlevel2D[6]	= `Symboli`
+dim stDetlevel3D[]
+	stDetlevel3D[1]	= `Esitystavan mukaan`
+	stDetlevel3D[2]	= `Mittakaavassa`
+	stDetlevel3D[3]	= `Täysi`
+	stDetlevel3D[4]	= `Yksinkertaistettu`
+	stDetlevel3D[5]	= `Kaaviomainen`
+	stDetlevel3D[6]	= `Pois`
+]]>
+</Script_1D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_PR SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_PR>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_UI SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_UI>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_VL SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+values{2} "iDetlevel2D"		\
+	!	DETLEVEL_2D_MVO,		stDetlevel3D[DETLEVEL_2D_MVO],
+	!	DETLEVEL_2D_SCSENS,		stDetlevel2D[DETLEVEL_2D_SCSENS],
+	DETLEVEL_2D_DETAILED,	stDetlevel2D[DETLEVEL_2D_DETAILED],
+	DETLEVEL_2D_SIMPLE,		stDetlevel2D[DETLEVEL_2D_SIMPLE],
+	!	DETLEVEL_2D_DRAFT,		stDetlevel2D[DETLEVEL_2D_DRAFT],
+	DETLEVEL_2D_SYMBOLIC,	stDetlevel2D[DETLEVEL_2D_SYMBOLIC]
+
+values{2} "iDetlevel3D"	 \
+	!	DETLEVEL_3D_MVO,		stDetlevel3D[DETLEVEL_3D_MVO],
+	DETLEVEL_3D_DETAILED,	stDetlevel3D[DETLEVEL_3D_DETAILED],
+	DETLEVEL_3D_SIMPLE,		stDetlevel3D[DETLEVEL_3D_SIMPLE],
+	!	DETLEVEL_3D_DRAFT,		stDetlevel3D[DETLEVEL_3D_DRAFT],
+	DETLEVEL_3D_OFF,		stDetlevel3D[DETLEVEL_3D_OFF]
+
+]]>
+</Script_VL>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_FWM SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_FWM>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_BWM SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_BWM>
+
+<ParamSection SectVersion="27" SectionFlags="0" SubIdent="0">
+	<ParamSectHeader>
+		<AutoHotspots>false</AutoHotspots>
+		<StatBits>
+			<STBit_FixSize/>
+		</StatBits>
+		<WDLeftFrame>0</WDLeftFrame>
+		<WDRightFrame>0</WDRightFrame>
+		<WDTopFrame>0</WDTopFrame>
+		<WDBotFrame>0</WDBotFrame>
+		<LayFlags>65535</LayFlags>
+		<WDMirrorThickness>0</WDMirrorThickness>
+		<WDWallInset>0</WDWallInset>
+	</ParamSectHeader>
+	<Parameters>
+		<Length Name="A">
+			<Description><![CDATA[""]]></Description>
+			<Fix/>
+			<Value>1</Value>
+		</Length>
+		<Length Name="B">
+			<Description><![CDATA[""]]></Description>
+			<Fix/>
+			<Value>2</Value>
+		</Length>
+		<Length Name="ZZYZX">
+			<Description><![CDATA[""]]></Description>
+			<Fix/>
+			<Value>0.05</Value>
+		</Length>
+		<Length Name="huulloksen_leveys">
+			<Description><![CDATA[""]]></Description>
+			<Value>0.005</Value>
+		</Length>
+		<Length Name="huulloksen_paksuus">
+			<Description><![CDATA[""]]></Description>
+			<Value>0.005</Value>
+		</Length>
+		<BuildingMaterial Name="aine">
+			<Description><![CDATA[""]]></Description>
+			<Value>49</Value>
+		</BuildingMaterial>
+		<Material Name="pinta">
+			<Description><![CDATA[""]]></Description>
+			<Value>18</Value>
+		</Material>
+		<Integer Name="iDetlevel2D">
+			<Description><![CDATA[""]]></Description>
+			<Value>3</Value>
+		</Integer>
+		<Integer Name="iDetlevel3D">
+			<Description><![CDATA[""]]></Description>
+			<Value>3</Value>
+		</Integer>
+		<Boolean Name="AC_show2DHotspotsIn3D">
+			<Description><![CDATA["Näytä 2D-apupisteet 3D:ssä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>1</Value>
+		</Boolean>
+		<Length Name="ac_bottomlevel">
+			<Description><![CDATA["Alareunan korko"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>1</Value>
+		</Length>
+		<Length Name="ac_toplevel">
+			<Description><![CDATA["Yläreunan korko"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>0</Value>
+		</Length>
+		<String Name="coll_guid">
+			<Description><![CDATA[""]]></Description>
+			<Fix/>
+			<Value><![CDATA["{881E9E65-1F53-4E36-A9E7-8161EAB4F85F}-{00000000-0000-0000-0000-000000000000}"]]></Value>
+		</String>
+		<String Name="coll_name">
+			<Description><![CDATA[""]]></Description>
+			<Fix/>
+			<Value><![CDATA["Door_Panel_Collection.gsm"]]></Value>
+		</String>
+		<Boolean Name="use_stored_environment">
+			<Description><![CDATA[""]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>0</Value>
+		</Boolean>
+		<String Name="ac_custom_component_type_name">
+			<Description><![CDATA[""]]></Description>
+			<Fix/>
+			<Value><![CDATA["Ovilehti"]]></Value>
+		</String>
+	</Parameters>
+</ParamSection>
+
+<Copyright SectVersion="1" SectionFlags="0" SubIdent="0">
+	<Author></Author>
+	<License>
+		<Type>CC BY</Type>
+		<Version>4.0</Version>
+	</License>
+</Copyright>
+
+<Keywords SectVersion="1" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Keywords>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Comment SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Comment>
+
+</Symbol>

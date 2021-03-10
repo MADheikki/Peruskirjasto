@@ -1,0 +1,1050 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Symbol IsArchivable="false" IsPlaceable="true" MainGUID="0014D98C-DB4E-FD41-AB34-A6A4F720F753" MigrationValue="Normal" Owner="1196638531" Signature="1196644685" Version="40">
+<Ancestry SectVersion="1" SectionFlags="0" SubIdent="0" Template="false">
+	<MainGUID>F938E33A-329D-4A36-BE3E-85E126820996</MainGUID>
+	<MainGUID>B176ABF1-5813-478F-926B-28EE7C5DC1F7</MainGUID>
+	<MainGUID>4FD10D67-2F29-4844-A65A-6597589B0CB5</MainGUID>
+	<MainGUID>B3A106BF-6277-456E-8657-65B5C2D1C315</MainGUID>
+	<MainGUID>9C0F3C78-D2CB-4528-ADA2-703C8A09FC1A</MainGUID>
+</Ancestry>
+
+<CalledMacros SectVersion="2" SectionFlags="0" SubIdent="0">
+</CalledMacros>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_3D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_3D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_2D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+
+pen kyna
+
+above = (etaisyys >0)
+
+rivivali = 1.5*font_size* GLOB_SCALE/1000
+
+set style "oikea"
+spaceleveys = STW (" ") / 1000 * GLOB_SCALE
+
+riveja = 0 
+for n = 1 to vardim1(show)
+	riveja = riveja + show[n]
+next n
+
+add2 0, -WALL_THICKNESS/2
+
+
+HOTSPOT2 0	,0			,  unID, etaisyys,1+128 	: unID=unID+1
+HOTSPOT2 0	,-1			,  unID, etaisyys,3 		: unID=unID+1
+HOTSPOT2 0	,etaisyys	,  unID, etaisyys,2 		: unID=unID+1
+
+if above then
+	line2 0, sgn(etaisyys)*WALL_THICKNESS/2,0,etaisyys+riveja*rivivali
+	y = etaisyys+(riveja)*rivivali
+else
+	line2 0, sgn(etaisyys)*WALL_THICKNESS/2,0, etaisyys-riveja*rivivali
+	y= etaisyys
+endif
+
+add2 0,y
+
+! ---------------- orientation
+
+if orientation="Ulkoreunan suuntaan" then
+	add2 0,-riveja*rivivali/2
+	rot2 180
+	add2 0,riveja*rivivali/2
+endif
+
+if orientation="Näkymän mukaan"  then
+	angleViewRot = 0
+	rrr = REQUEST ("View_Rotangle", "", angleViewRot)
+	totalRotate = (SYMB_ROTANGLE + angleViewRot) MOD 360
+	SYMB_ROTANGLE = totalRotate
+	if SYMB_ROTANGLE > 90 and SYMB_ROTANGLE < 270 THEN 
+		add2 0,-riveja*rivivali/2
+		rot2 180
+		add2 0,riveja*rivivali/2
+	endif
+endif
+
+add2 0,-rivivali
+
+
+x=0
+y=0
+
+for n = 1 to vardim1(vars)
+	out = "<?>"
+	if show[n] then
+
+		if types[n]  = "Teksti" then
+			out = vars[n]
+		endif
+
+		if types[n]  = "ID" then
+			nn = REQUEST("Full_ID_of_parent", "", _outval)
+			if nn then out = _outval
+		endif
+
+		if types[n]  = "Nimi" then
+			nn=request("Assoclp_Name", "", _outval)
+			if nn then out = _outval
+		endif
+
+
+		if types[n] = "Parametri" then
+			dim _outvalues[][]:	_dim1 = 0 : _dim2 = 0
+			nn=request("Assoclp_parvalue", vars[n], namind, _type, flag, _dim1, _dim2, _outvalues)
+			if nn then
+				gosub "flatten arrays"
+				out= _outvaluestring
+			else
+				out = "<can't find parameter '"+vars[n]+"'>"
+			endif
+
+		endif
+
+		if types[n] = "Ominaisuus" then
+			_outvaluestring = "" 
+			dim _outvalues[][]:	_dim1 = 0 : _dim2 = 0
+			nn = REQUEST ("Property_Value_Of_Parent",vars[n], _type, _dim1, _dim2, _outvalues)
+			if nn then
+				gosub "flatten arrays"
+				out= _outvaluestring
+			else
+				out = "<ominaisuutta '"+vars[n]+"' ei löydy>"
+			endif
+		endif
+
+		if GLOB_FEEDBACK_MODE then
+			rect2 x-spaceleveys,y, x-spaceleveys-stw(names[n])/ 1000 * GLOB_SCALE, y+rivivali
+			rect2 x+spaceleveys,y, x+spaceleveys+stw(out)/ 1000 * GLOB_SCALE, y+rivivali
+		else
+			if bold[n] then set style "oikea bold" else set style "oikea"
+			text2 x-spaceleveys,y,names[n]
+			if bold[n] then set style "vasen bold" else set style "vasen"
+			text2 x+spaceleveys,y,out
+		endif
+
+		y=y-rivivali
+
+	endif ! if show
+next n
+
+end ! ---------------------------------------------- end
+
+"flatten arrays":
+!in:  _dim1, _dim2, _outvalues
+!out: _outvaluestring
+
+		! change zeros to ones - it is easier to handle all possible arrays in a double loop
+		if _dim1  = 0 then _dim1 = 1	
+		if _dim2  = 0 then _dim2 = 1
+	
+		for i = 1 to _dim1
+			for j = 1 to _dim2
+				if (i + j) > 2 then _outvaluestring = _outvaluestring + "; "
+				_toconv = _outvalues[j][i]
+				gosub "convertToString"
+				_outvaluestring = _conv 
+			next j
+		next i
+
+
+return
+
+"convertToString":
+! _toconv -> _conv
+
+	if _type = 5 then !length
+		format_string=""
+		foo = REQUEST ("Linear_dimension", "", format_string)
+		!foo = REQUEST ("Working_length_unit", "", format_string)
+		_conv = str(format_string, _toconv) 
+	endif
+
+	if _type = 4 then		! String
+		_conv = _outvalues[j][i]
+	endif	
+
+	if _type = 3 then		! Real number to string
+		_conv = str ("%.2", _toconv)
+	endif
+
+	if _type = 2 then		! Integer to string
+		_conv = str ("%.0", _toconv)
+	endif
+
+	if _type = 1 then !boolean
+		if _toconv then _conv ="Yes" else _conv ="No"
+	endif
+return
+
+]]>
+</Script_2D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_1D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+unID=24335
+
+
+nn = APPLICATION_QUERY ("PARAMETER_SCRIPT", "FIRSTOCCASION_IN_PROGRESS", isFirstRun) 
+
+
+
+if GLOB_UI_BUTTON_ID and isFirstRun then
+
+	if GLOB_UI_BUTTON_ID < 1000 then 
+		parameters gs_ui_current_page = GLOB_UI_BUTTON_ID
+	endif
+
+	if GLOB_UI_BUTTON_ID > 1000 and GLOB_UI_BUTTON_ID < 2000 then ! vaihdetaan järjestystä
+
+		temp = types[GLOB_UI_BUTTON_ID-1000]
+		types[GLOB_UI_BUTTON_ID-1000] = types[GLOB_UI_BUTTON_ID-1000+1]
+		types[GLOB_UI_BUTTON_ID-1000+1] = temp
+
+		temp = vars[GLOB_UI_BUTTON_ID-1000]
+		vars[GLOB_UI_BUTTON_ID-1000] = vars[GLOB_UI_BUTTON_ID-1000+1]
+		vars[GLOB_UI_BUTTON_ID-1000+1] = temp
+
+		temp = names[GLOB_UI_BUTTON_ID-1000]
+		names[GLOB_UI_BUTTON_ID-1000] = names[GLOB_UI_BUTTON_ID-1000+1]
+		names[GLOB_UI_BUTTON_ID-1000+1] = temp
+
+		temp = show[GLOB_UI_BUTTON_ID-1000]
+		show[GLOB_UI_BUTTON_ID-1000] = show[GLOB_UI_BUTTON_ID-1000+1]
+		show[GLOB_UI_BUTTON_ID-1000+1] = temp
+
+		temp = bold[GLOB_UI_BUTTON_ID-1000]
+		bold[GLOB_UI_BUTTON_ID-1000] = bold[GLOB_UI_BUTTON_ID-1000+1]
+		bold[GLOB_UI_BUTTON_ID-1000+1] = temp
+
+		parameters  types=types, vars = vars, names = names, show = show, bold=bold
+
+	endif	
+
+	if GLOB_UI_BUTTON_ID > 2000 and GLOB_UI_BUTTON_ID < 3000 then ! lisätään
+
+		nn = 1
+		dim _types[], _vars[], _names[], _show[], _bold[]
+		for n= 1 to vardim1(vars)
+			_types[nn] = types[n]
+			_vars[nn] = vars[n]
+			_names[nn] = names[n]
+			_show[nn] = show[n]
+			_bold[nn] = bold[n]
+			nn = nn+1
+			if n= GLOB_UI_BUTTON_ID -2000 then 
+				_types[nn] = "Text"
+				_vars[nn] = ""
+				_names[nn] = ""
+				_show[nn] = 0
+				_bold[nn] = 0
+				nn = nn+1
+			endif
+		next n
+
+		parameters  types=_types, vars = _vars, names = _names, show = _show, bold=_bold
+
+	endif	
+
+	if GLOB_UI_BUTTON_ID > 3000 and GLOB_UI_BUTTON_ID < 4000 then ! poistetaan
+
+		nn = 1
+		dim _types[], _vars[], _names[], _show[], _bold[]
+		for n=1 to vardim1(vars)
+			if n <> GLOB_UI_BUTTON_ID -3000 then
+				_types[nn] = types[n]
+				_vars[nn] = vars[n]
+				_names[nn] = names[n]
+				_show[nn] = show[n]
+				_bold[nn] = bold[n]
+				nn=nn+1
+			endif
+		next n
+
+		parameters  types=_types, vars = _vars, names = _names, show = _show, bold=_bold
+
+	endif	
+
+	if GLOB_UI_BUTTON_ID = 5000 then ! reset
+		parameters reset_lists = 1
+	endif
+
+
+endif
+
+
+DEFINE STYLE "vasen" font, font_size, 7, 0
+DEFINE STYLE "keski" font, font_size, 8, 0
+DEFINE STYLE "oikea" font, font_size, 9, 0
+DEFINE STYLE "vasen bold" font, font_size, 7, 1
+DEFINE STYLE "keski bold" font, font_size, 8, 1
+DEFINE STYLE "oikea bold" font, font_size, 9, 1
+
+if reset_lists then
+
+	dim _types[], _vars[], _names[], _bold[], _show[]
+	i=1
+
+_types[i]="ID"        : _vars[i]=""                       : _names[i]="Tunnus"                                            : _show[i]=1 : _bold[i]=1 : i = i+1
+
+_types[i]="Parametri" : _vars[i]="A"                      : _names[i]="Leveys"                                         : _show[i]=1 : _bold[i]=0 : i = i+1
+_types[i]="Parametri" : _vars[i]="B"                      : _names[i]="Korkeus"                                        : _show[i]=1 : _bold[i]=0 : i = i+1
+
+_types[i]="Parametri" : _vars[i]="gs_frame_thk"           : _names[i]="Karmin paksuus"                               : _show[i]=0 : _bold[i]=0 : i = i+1
+_types[i]="Parametri" : _vars[i]="gs_frame_width"           : _names[i]="Karmin leveys"                               : _show[i]=0 : _bold[i]=0 : i = i+1
+
+_types[i]="Parametri" : _vars[i]="gs_leaf_thk"           : _names[i]="Ovilevyn paksuus"                               : _show[i]=0 : _bold[i]=0 : i = i+1
+
+_types[i]="Parametri" : _vars[i]="gs_sash_thk"           : _names[i]="Puitteen paksuus"                               : _show[i]=0 : _bold[i]=0 : i = i+1
+_types[i]="Parametri" : _vars[i]="gs_sash_width"           : _names[i]="Puitteen leveys"                               : _show[i]=0 : _bold[i]=0 : i = i+1
+
+_types[i]="Parametri" : _vars[i]="gs_glass_thk"           : _names[i]="Ikkunan paksuus"                               : _show[i]=0 : _bold[i]=0 : i = i+1
+
+_types[i]="Parametri" : _vars[i]="ac_left_oversize"       : _names[i]="Vasen asennusvara"                                 : _show[i]=0 : _bold[i]=0 : i = i+1
+_types[i]="Parametri" : _vars[i]="ac_right_oversize"      : _names[i]="Oikea asennusvara"                                : _show[i]=0 : _bold[i]=0 : i = i+1
+_types[i]="Parametri" : _vars[i]="ac_upper_oversize"      : _names[i]="Yläasennusvara"                                : _show[i]=0 : _bold[i]=0 : i = i+1
+_types[i]="Parametri" : _vars[i]="ac_lower_oversize"      : _names[i]="Ala-asennusvara"                                : _show[i]=0 : _bold[i]=0 : i = i+1
+
+
+	parameters types = _types, vars = _vars, names = _names, show = _show, bold=_bold, reset_lists = 0
+endif
+
+
+]]>
+</Script_1D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_PR SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_PR>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_UI SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+
+ui_current_page gs_ui_current_page
+
+
+nudge = 3
+
+persivu = 10
+
+sivuja = 1 + ceil(vardim1(vars)/persivu)
+
+tab = (444-20)/4
+
+sivunumero = 0
+
+x=10
+y=10
+
+sivunumero = sivunumero + 1
+ui_page sivunumero, -1, "Asetukset", "" ! ----------------------------------------------------------  Asetukset
+	x=50
+	y=60
+	rivivali = 24
+	
+	gosub "painikkeet"
+	
+	UI_OUTFIELD "Kirjasin:", x,y
+	UI_INFIELD "font", x+tab, y-nudge, 2*tab
+	y=y+rivivali
+	
+	UI_OUTFIELD "Koko:", x,y
+	UI_INFIELD "font_size", x+tab, y-nudge
+	y=y+rivivali
+	
+	UI_OUTFIELD "Kynä:", x,y
+	UI_INFIELD "kyna", x+tab, y-nudge
+	y=y+rivivali
+	
+	UI_OUTFIELD "Etäisyys:", x,y
+	UI_INFIELD "etaisyys", x+tab, y-nudge
+	UI_OUTFIELD "(+: sisäpuolella, -: ulkopuolella)", x+2*tab,y
+	y=y+rivivali
+	
+	UI_OUTFIELD "Tekstin suunta:", x,y
+	UI_INFIELD "orientation", x+tab, y-nudge, 2*tab
+	y=y+rivivali
+
+	y=y+rivivali
+
+	ui_button ui_function, "Hae oletusasetukset",  x+tab, y-nudge, 2*tab, rivivali, 5000
+	y=y+rivivali
+
+
+
+colup   = 0                                                                   
+coldown = colup   +22    
+
+colshow = coldown +30   
+                                                               
+
+colname = colshow +30                                                                   
+coltype = colname +115                                                                   
+colvars = coltype +65   
+                                                                
+colbold = colvars +90                                                                   
+                                                                
+coldel  = colbold +25                                                                   
+coladd  = coldel  +22                                                                   
+
+
+for n = 1 to vardim1(vars)
+
+	! uusi sivu
+	if (n-1)% persivu = 0 then
+		sivunumero = sivunumero + 1
+		ui_page sivunumero, -1, "Arvot "+str(sivunumero-1, 1,0), "" ! ----------------------------------------------------------  Parameters
+		x=10
+		y=30
+		rivivali = 20
+
+		gosub "painikkeet"
+
+		UI_STYLE 0,1
+
+		UI_OUTFIELD "Tyyppi"			, x+coltype		, y
+		UI_OUTFIELD "Prop/par/text"	, x+colvars		, y UI_TOOLTIP "Text, property, or parameter according to type"
+		UI_OUTFIELD "Teksti"			, x+colname		, y
+	!	UI_OUTFIELD "Lihavointi"			, x+colbold-5	, y UI_TOOLTIP "Bold"
+		UI_OUTFIELD "Näytä"			, x+colshow-8	, y UI_TOOLTIP "Show"
+		y=y+rivivali
+
+		UI_STYLE 0,0
+
+	endif	
+
+	UI_INFIELD{2} names[n], x+colname, y-nudge, 1*tab, rivivali UI_TOOLTIP "Title"
+
+	UI_INFIELD{2} types[n], x+coltype, y-nudge, 60, rivivali UI_TOOLTIP "Type of field: plain text, window parameter, or window property"
+
+	if types[n] = "Teksti" then
+		UI_INFIELD{2} vars[n], 	x+colvars, y-nudge UI_TOOLTIP "Text to show"
+	endif
+	if types[n] = "ID" or types[n] = "Object name" then
+		UI_OUTFIELD "-", 	x+colvars, y
+	endif
+	if types[n] = "Parametri" then
+		UI_INFIELD{2} vars[n], 	x+colvars, y-nudge UI_TOOLTIP "Parameter to show"
+	endif
+	if types[n] = "Ominaisuus" then
+		dim _parentProperties[]
+		nn = REQUEST ("Properties_Of_Parent", "", _parentProperties)
+			_displayName = ""
+			nn = REQUEST ("Property_Name", vars[n], _typeName, _groupName, _propertyName)
+				if _typeName  # "" 	then _displayName = _typeName + " : "
+				if _groupName # "" 	then _displayName = _displayName + _groupName + " : "
+			_displayName = _displayName + _propertyName 	! no need to check, always has a string value
+		
+		ui_custom_popup_infield{2} vars[n], 
+			x+colvars,y-nudge, tab*.75, 20, 		! X Position, Y Position, Width, Height
+			1, 					! Store Hidden ID
+			3,  				! Tree Depth
+			1,   				! Grouping Method
+			_displayName,   	! Created value description
+			_parentProperties UI_TOOLTIP "Property to show"
+	endif
+
+	!UI_INFIELD{2} bold[n]		, x+colbold	, y-nudge				, 22, rivivali-1 			UI_TOOLTIP "Bold text"
+	UI_INFIELD{2} bold[n], x +colbold, y-nudge, 18, 18 ,
+        6, "",0,0, 0, 0,16, 16,
+        "bold.png", "",
+        "bold.png", "" UI_TOOLTIP "Bold text"
+
+
+	UI_INFIELD{2} show[n]		, x+colshow	, y-nudge				, 22, rivivali-1 			UI_TOOLTIP "Show line"
+	ui_button ui_function, "+"	, x+coladd	, y-nudge+rivivali/2	, 20, rivivali-1, 2000+n 	UI_TOOLTIP "Add new line"
+	ui_button ui_function, "-"	, x+coldel	, y-nudge				, 20, rivivali-1, 3000+n 	UI_TOOLTIP "Remove line"
+	if n >1 then
+		ui_button ui_function, "↑",  x+colup, y-nudge, 20, rivivali-1, 1000+n-1 UI_TOOLTIP "Move line up"
+	endif
+	if n < vardim1(vars) then
+		ui_button ui_function, "↓",  x+coldown, y-nudge, 20, rivivali-1, 1000+n UI_TOOLTIP "Move line down"
+	endif
+	y=y+rivivali
+
+
+
+next n
+
+end ! ---------------------------------------------------- END
+
+"painikkeet":
+
+	for s = 1 to sivuja
+		sivunimi = "Arvot "+str(s-1,1,0)
+		if s = 1 then sivunimi = "Settings"
+		if gs_ui_current_page=s then 
+			UI_GROUPBOX "", (s-1)*444/sivuja, 2, 444/sivuja-3, 22
+			ui_outfield sivunimi, (s-1)*444/sivuja, 8, 444/sivuja-2, 20, 2 
+		else
+			ui_button ui_function, sivunimi, (s-1)*444/sivuja, 4, 444/sivuja-2, 20, s
+		endif
+	next s
+
+return
+]]>
+</Script_UI>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_VL SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+!lock "vars"
+
+values "types"	"Teksti", 		!
+				"ID", 	!
+				"Nimi",
+				"Parametri", 	!
+				"Ominaisuus"		! 
+
+dim fontNames[]
+n = request ("FONTNAMES_LIST", "", fontNames)
+values "font" fontNames, custom
+
+values "orientation" "Sisäreunan suuntaan", "Ulkoreunan suuntaan", "Näkymän mukaan" 
+]]>
+</Script_VL>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_FWM SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_FWM>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_BWM SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_BWM>
+
+<ParamSection SectVersion="27" SectionFlags="0" SubIdent="0">
+	<ParamSectHeader>
+		<AutoHotspots>false</AutoHotspots>
+		<StatBits>
+			<STBit_UIDefault/>
+			<STBit_FixSize/>
+			<STBit_UIUseHierarchicalPages/>
+		</StatBits>
+		<WDLeftFrame>0</WDLeftFrame>
+		<WDRightFrame>0</WDRightFrame>
+		<WDTopFrame>0</WDTopFrame>
+		<WDBotFrame>0</WDBotFrame>
+		<LayFlags>65535</LayFlags>
+		<WDMirrorThickness>0</WDMirrorThickness>
+		<WDWallInset>0</WDWallInset>
+	</ParamSectHeader>
+	<Parameters>
+		<Length Name="A">
+			<Description><![CDATA[""]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>1</Value>
+		</Length>
+		<Length Name="B">
+			<Description><![CDATA[""]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>1</Value>
+		</Length>
+		<String Name="vars">
+			<Description><![CDATA[""]]></Description>
+			<ArrayValues FirstDimension="10" SecondDimension="0">
+				<AVal Row="1"><![CDATA[""]]></AVal>
+				<AVal Row="2"><![CDATA["A"]]></AVal>
+				<AVal Row="3"><![CDATA["B"]]></AVal>
+				<AVal Row="4"><![CDATA["gs_frame_thk"]]></AVal>
+				<AVal Row="5"><![CDATA["gs_frame_width"]]></AVal>
+				<AVal Row="6"><![CDATA["gs_leaf_thk"]]></AVal>
+				<AVal Row="7"><![CDATA["ac_left_oversize"]]></AVal>
+				<AVal Row="8"><![CDATA["ac_right_oversize"]]></AVal>
+				<AVal Row="9"><![CDATA["ac_upper_oversize"]]></AVal>
+				<AVal Row="10"><![CDATA["ac_lower_oversize"]]></AVal>
+			</ArrayValues>
+		</String>
+		<String Name="types">
+			<Description><![CDATA[""]]></Description>
+			<ArrayValues FirstDimension="10" SecondDimension="0">
+				<AVal Row="1"><![CDATA["ID"]]></AVal>
+				<AVal Row="2"><![CDATA["Parametri"]]></AVal>
+				<AVal Row="3"><![CDATA["Parametri"]]></AVal>
+				<AVal Row="4"><![CDATA["Parametri"]]></AVal>
+				<AVal Row="5"><![CDATA["Parametri"]]></AVal>
+				<AVal Row="6"><![CDATA["Parametri"]]></AVal>
+				<AVal Row="7"><![CDATA["Parametri"]]></AVal>
+				<AVal Row="8"><![CDATA["Parametri"]]></AVal>
+				<AVal Row="9"><![CDATA["Parametri"]]></AVal>
+				<AVal Row="10"><![CDATA["Parametri"]]></AVal>
+			</ArrayValues>
+		</String>
+		<String Name="names">
+			<Description><![CDATA[""]]></Description>
+			<ArrayValues FirstDimension="10" SecondDimension="0">
+				<AVal Row="1"><![CDATA["ID"]]></AVal>
+				<AVal Row="2"><![CDATA["Leveys"]]></AVal>
+				<AVal Row="3"><![CDATA["Korkeus"]]></AVal>
+				<AVal Row="4"><![CDATA["Karmin paksuus"]]></AVal>
+				<AVal Row="5"><![CDATA["Karmin leveys"]]></AVal>
+				<AVal Row="6"><![CDATA["Ovilevyn paksuus"]]></AVal>
+				<AVal Row="7"><![CDATA["Vasen asennusvara"]]></AVal>
+				<AVal Row="8"><![CDATA["Oikea asennusvara"]]></AVal>
+				<AVal Row="9"><![CDATA["Yläasennusvara"]]></AVal>
+				<AVal Row="10"><![CDATA["Ala-asennusvara"]]></AVal>
+			</ArrayValues>
+		</String>
+		<Boolean Name="show">
+			<Description><![CDATA[""]]></Description>
+			<ArrayValues FirstDimension="10" SecondDimension="0">
+				<AVal Row="1">1</AVal>
+				<AVal Row="2">1</AVal>
+				<AVal Row="3">1</AVal>
+				<AVal Row="4">0</AVal>
+				<AVal Row="5">0</AVal>
+				<AVal Row="6">0</AVal>
+				<AVal Row="7">0</AVal>
+				<AVal Row="8">0</AVal>
+				<AVal Row="9">0</AVal>
+				<AVal Row="10">0</AVal>
+			</ArrayValues>
+		</Boolean>
+		<Boolean Name="bold">
+			<Description><![CDATA[""]]></Description>
+			<ArrayValues FirstDimension="10" SecondDimension="0">
+				<AVal Row="1">1</AVal>
+				<AVal Row="2">0</AVal>
+				<AVal Row="3">0</AVal>
+				<AVal Row="4">0</AVal>
+				<AVal Row="5">0</AVal>
+				<AVal Row="6">0</AVal>
+				<AVal Row="7">0</AVal>
+				<AVal Row="8">0</AVal>
+				<AVal Row="9">0</AVal>
+				<AVal Row="10">0</AVal>
+			</ArrayValues>
+		</Boolean>
+		<String Name="font">
+			<Description><![CDATA["Font"]]></Description>
+			<Value><![CDATA["Arial"]]></Value>
+		</String>
+		<RealNum Name="font_size">
+			<Description><![CDATA["Font size"]]></Description>
+			<Value>2</Value>
+		</RealNum>
+		<PenColor Name="kyna">
+			<Description><![CDATA["Pen"]]></Description>
+			<Value>1</Value>
+		</PenColor>
+		<String Name="orientation">
+			<Description><![CDATA["Orientation"]]></Description>
+			<Value><![CDATA["Sisäreunan suuntaan"]]></Value>
+		</String>
+		<Length Name="etaisyys">
+			<Description><![CDATA["Distance"]]></Description>
+			<Value>0.5</Value>
+		</Length>
+		<Boolean Name="reset_lists">
+			<Description><![CDATA["Reset parametes"]]></Description>
+			<Value>0</Value>
+		</Boolean>
+		<Integer Name="gs_ui_current_page">
+			<Description><![CDATA[""]]></Description>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>2</Value>
+		</Integer>
+		<String Name="AC_TextFont_1">
+			<Description><![CDATA["Merkin teksti 1 tyyppi (oletus)"]]></Description>
+			<Fix/>
+			<Value><![CDATA["Arial"]]></Value>
+		</String>
+		<RealNum Name="AC_TextSize_1">
+			<Description><![CDATA["Merkin tekstin 1 koko (oletus)"]]></Description>
+			<Fix/>
+			<Value>2</Value>
+		</RealNum>
+		<Integer Name="AC_TextStyle_1">
+			<Description><![CDATA["Merkin tekstin 1 tyyli (oletus)"]]></Description>
+			<Fix/>
+			<Value>0</Value>
+		</Integer>
+		<Integer Name="AC_TextAlignment_1">
+			<Description><![CDATA["Merkintätekstin 1 kohdistus (oletus)"]]></Description>
+			<Fix/>
+			<Value>1</Value>
+		</Integer>
+		<RealNum Name="AC_TextLeading_1">
+			<Description><![CDATA["Merkintätekstin 1 johto (oletus)"]]></Description>
+			<Fix/>
+			<Value>1</Value>
+		</RealNum>
+		<RealNum Name="AC_TextCharWidthFactor_1">
+			<Description><![CDATA["Merkintätekstin 1 merkkileveyskerroin (oletus)"]]></Description>
+			<Fix/>
+			<Value>1</Value>
+		</RealNum>
+		<RealNum Name="AC_TextCharSpaceFactor_1">
+			<Description><![CDATA["Merkintätekstin 1 tekstimerkkien välikerroin (oletus)"]]></Description>
+			<Fix/>
+			<Value>1</Value>
+		</RealNum>
+		<RealNum Name="AC_MarkerSize">
+			<Description><![CDATA["Merkinnän koko"]]></Description>
+			<Fix/>
+			<Value>10</Value>
+		</RealNum>
+		<String Name="AC_MarkerText_1">
+			<Description><![CDATA["Merkinnän teksti 1"]]></Description>
+			<Fix/>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="AC_MarkerText_2">
+			<Description><![CDATA["Merkinnän teksti 2"]]></Description>
+			<Fix/>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="AC_MarkerText_3">
+			<Description><![CDATA["Merkinnän teksti 3"]]></Description>
+			<Fix/>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="AC_MarkerText_4">
+			<Description><![CDATA["Merkinnän teksti 4"]]></Description>
+			<Fix/>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<PenColor Name="AC_TextPen_1">
+			<Description><![CDATA["Merkin teksti 1 kynä (oletus)"]]></Description>
+			<Fix/>
+			<Value>7</Value>
+		</PenColor>
+		<FillPattern Name="AC_MarkerFill">
+			<Description><![CDATA["Merkinnän täyte"]]></Description>
+			<Fix/>
+			<Value>64</Value>
+		</FillPattern>
+		<String Name="AC_TextFont_2">
+			<Description><![CDATA["Merkinnän tekstin 2 tyyppi"]]></Description>
+			<Value><![CDATA["Arial"]]></Value>
+		</String>
+		<String Name="AC_TextFont_3">
+			<Description><![CDATA["Merkinnän tekstin 3 tyyppi"]]></Description>
+			<Value><![CDATA["Arial"]]></Value>
+		</String>
+		<String Name="AC_TextFont_4">
+			<Description><![CDATA["Merkinnän tekstin 4 tyyppi"]]></Description>
+			<Value><![CDATA["Arial"]]></Value>
+		</String>
+		<RealNum Name="AC_TextSize_2">
+			<Description><![CDATA["Merkinnän tekstin 2 koko"]]></Description>
+			<Value>2</Value>
+		</RealNum>
+		<RealNum Name="AC_TextSize_3">
+			<Description><![CDATA["Merkinnän tekstin 3 koko"]]></Description>
+			<Value>2</Value>
+		</RealNum>
+		<RealNum Name="AC_TextSize_4">
+			<Description><![CDATA["Merkinnän tekstin 4 koko"]]></Description>
+			<Value>2</Value>
+		</RealNum>
+		<Integer Name="AC_TextStyle_2">
+			<Description><![CDATA["Merkinnän tekstin 2 tyyli"]]></Description>
+			<Value>0</Value>
+		</Integer>
+		<Integer Name="AC_TextStyle_3">
+			<Description><![CDATA["Merkinnän tekstin 3 tyyli"]]></Description>
+			<Value>0</Value>
+		</Integer>
+		<Integer Name="AC_TextStyle_4">
+			<Description><![CDATA["Merkinnän tekstin 4 tyyli"]]></Description>
+			<Value>0</Value>
+		</Integer>
+		<PenColor Name="AC_TextPen_2">
+			<Description><![CDATA["Merkinnän tekstin 2 kynä"]]></Description>
+			<Value>7</Value>
+		</PenColor>
+		<PenColor Name="AC_TextPen_3">
+			<Description><![CDATA["Merkinnän tekstin 3 kynä"]]></Description>
+			<Value>7</Value>
+		</PenColor>
+		<PenColor Name="AC_TextPen_4">
+			<Description><![CDATA["Merkinnän tekstin 4 kynä"]]></Description>
+			<Value>7</Value>
+		</PenColor>
+		<Boolean Name="GS_UniTextFormat">
+			<Description><![CDATA["Yhtenäinen tekstin asu"]]></Description>
+			<Value>0</Value>
+		</Boolean>
+		<Boolean Name="AC_Readable">
+			<Description><![CDATA["Luettava teksti"]]></Description>
+			<Fix/>
+			<Value>1</Value>
+		</Boolean>
+		<String Name="GS_Separator">
+			<Description><![CDATA["Erotin lev ja kor välissä"]]></Description>
+			<Fix/>
+			<Value><![CDATA["x"]]></Value>
+		</String>
+		<String Name="AC_WIDO_ID">
+			<Description><![CDATA[""]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value><![CDATA["Ikk-34"]]></Value>
+		</String>
+		<Length Name="AC_WIDO_A_SIZE">
+			<Description><![CDATA["Ikkunan leveys"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>1.45</Value>
+		</Length>
+		<Length Name="AC_WIDO_B_SIZE">
+			<Description><![CDATA["Ikkunan korkeus"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>1.8</Value>
+		</Length>
+		<Boolean Name="AC_WIDO_REVEAL_SIDE">
+			<Description><![CDATA[""]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>0</Value>
+		</Boolean>
+		<Boolean Name="AC_WIDO_REVEAL_SIDE_2">
+			<Description><![CDATA[""]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>0</Value>
+		</Boolean>
+		<Angle Name="AC_SYMB_ROTANGLE">
+			<Description><![CDATA[""]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>0</Value>
+		</Angle>
+		<Boolean Name="AC_WIDO_MIRRORED">
+			<Description><![CDATA[""]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>0</Value>
+		</Boolean>
+		<Length Name="AC_WALL_THICKNESS">
+			<Description><![CDATA[""]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>0.3</Value>
+		</Length>
+	</Parameters>
+</ParamSection>
+
+<Copyright SectVersion="1" SectionFlags="0" SubIdent="0">
+	<Author>M.A.D. / Nordic BIM Group</Author>
+	<License>
+		<Type>Commercial</Type>
+		<Version></Version>
+	</License>
+</Copyright>
+
+<Keywords SectVersion="1" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Keywords>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Comment SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+© M.A.D. / Nordic BIM Group 2020
+]]>
+</Comment>
+
+<Picture MIME="image/png" SectVersion="19" SectionFlags="0" SubIdent="0" length_in_bytes="4855" platform="Win">
+	<![CDATA[
+	696D6167652F706E670089504E470D0A1A0A0000000D494844520000009E0000
+	008D0802000000C9A55419000000017352474200AECE1CE90000000970485973
+	00000B1300000B1301009A9C1800001292494441547801ED9D07AC56C512C7B9
+	80A8202841547C224505318A051BB170B1C7F6146BAC11B1448DA251B04513FB
+	C3821D2C802556ECBD83157BC18262016CA08828282A16DE0F46C675F79C73F7
+	9EAF9D73EE7E211FB3B3B36DFE5B667767BF5BB760C18266E153440D342F62A3
+	429B166A20405BD87E10A00DD0165603856D5818B501DAC26AA0B00D0BA33640
+	5B580D14B66161D406680BAB81C2362C8CDA006D613550D88685511BA02DAC06
+	0ADBB0306A03B485D540611B16466D80B6B01A286CC3C2A80DD0165603856D58
+	18B501DAC26AA0B00D0BA336405B580D14B6614D74D4D6D5D51516D2C50D6BA2
+	D02E6E7E91FF0FD01616DD006D8076B106DE79E79DFF2EFA7CF4D1478B797FFF
+	FFE5975F4AD481071E684511BCFDF6DB891D3060C09F7FFE3977EE5C08829F7F
+	FEB92BA99CB163C72273C619672807E2B3CF3ED3E0CC9933A5448A5666B9081A
+	585F5F7FDA69A7F967F8E28B2F1E75D451DB6DB7DDC1071F7CCD35D7CC9831C3
+	4DFBD34F3F5D78E185FBECB3CF0E3BEC70FAE9A73FF5D453AE0C1C4FB1C8B47F
+	3379A9D7A88F2AF1CA2BAFB412D2182DE9830F3EB06277DC71476237DD7453F8
+	9AC9BBEFBE6B8999C1A143879264EBADB716261DE2D8638F6DD1A2C5FCF9F385
+	336DDA3429D12DCECCC7A549E5324DCEECD9B37BF4E881D8EEBBEF6EF213E813
+	4F3C512AA3DF9D3B779E3469929964F2E4C99D3A755201214E3AE9245306DA53
+	CC4A65051B68A1252DC135D75C933AEDBBEFBE562C5AD04A5F7CF1C5662C2375
+	D96597259621087FFAF4E9FF59F4F9F0C30F4D318BB6A01D376E9CE45F6968A9
+	1EE355CAF284F6C61B6F147986E3C30F3F7CDD75D7ADBCF2CA7056586105C69F
+	B4EBF7DF7F97EED2A1430786C1238F3CC2E09654C3860DD3B67B8AA97C1C9106
+	DA638E39860AD125CD4C5177BB76EDE06FB2C9267C6FBBEDB666EC1B6FBC216D
+	78E185174C7E325D1368C78C19D3BE7D7BA92DDF3ED0FEF1C71FABAFBE3AC2AC
+	0EDA22168E65965906E68811238479C30D3710E4F3E69B6FAA1813381CFA3988
+	364A4C738823D2407BDF7DF72DAA6133564ACDF7D9679F854963EEBFFF7E8825
+	975CF2E79F7FD6D8E1C387C3047B6D00E3F5FDF7DFFFF5D75F5506021D3DFFFC
+	F374F9B7DF7E9B816E423B75EA54942EE5124B5A04CC0999E2483B72E4C8A79F
+	7E9AA9DBCCD6A5C9C765C29112895D71C515D759671D081F685F7FFD75A9D863
+	8F3D66667BC00107C05F77DD7585B9F3CE3B13942549C53EFEF863497BEFBDF7
+	364A4C738823A25B18272DFC1F7EF881058F0ADD7AEBAD2A79F2C927C3D975D7
+	5D5131B8423FF4D0431ABBDB6EBBC1E15B385F7DF515413EE65A7BEAA9A79AC3
+	058DECBFFFFEC8C85ACB34B028C53F5FE0A7D05E7AE9A5CB2FBFBCC651BDCB2F
+	BF5C4B7709245D261C0CC0E6CD9BB3D67CF3CD37871F7E38623ED0627620C98A
+	43D734B3BDE79E7BA44A73E6CC812F35BCE8A28B4C19E8DEBD7B2376C2092708
+	DF53CCCAC40DA6D9FCD0868D36DA88DA60104AD5F9A6C3F28DD5D7BA75EBCD37
+	DF5C3922C07882D87EFBED25483D84D06FD69EF3CE3B0FE365C30D373CF2C823
+	37DE78634CF15B6EB94505B6DC72CB7EFDFA49708F3DF6D86FBFFDA4030967F0
+	E0C1DF7FFF3DB542066C18D0C71D771CE340937B12BBECB2CB7BEFBD77DB6DB7
+	B1467A2641EC934F3EE11BFB487ABC265C659555846668FEF8E38FDF7DF71D41
+	655A62327C3DC5346D12E1A2EDC3C16A27D3F5D65B4F84B13BE4E8EED34F3F85
+	835140EC6AABAD26B10C4DA981C4C2B42C64B4D9AA552B6430802509DF320DC0
+	540B39C18C5A6AA9A59E7BEE3949CBD42DC0B0BFD2DC2C826C2D8E1BF41FB503
+	070E24433AB49589404E1435D76D1EBB1D4B4CE66D3A257C4F312B87C8609A51
+	4B5DB7D9661BBE274E9CC85403F1F8E38F933BA644F7EEDD09CAE804483E0451
+	3ADF202DB1D0D6E799679EC10A63223AFFFCF335EAACB3CEEAD2A58B069309FA
+	C1165B6C2132A4624685FEE28B2F9253952BF6975F7E21ABB66DDB5A192EB7DC
+	72C299376F9EC824882143ACA7985550643025B47DFBF665E2FDEBAFBF5E7EF9
+	65F295D958E75B160FD9BDC98C2D16161BF9C81AC064EEE57BABADB6224F9559
+	62892558E734984CB0309B0232E9B1EB309995A39933C81C6D5845FCF6DB6FC2
+	61ED10990431595F3CC5AC82228329A165FE9451C26686263DF9E493E4CE42AB
+	6588D53361C20438326A13A065F4238651AAC985607F6571E282D67CD0B265CB
+	38C94AF0650BCB626F65AE1CAC13FABAAC59CA5461E1C8BEDF534CD3261029A1
+	2547999319B598FEB366CD02ECFEFDFB6B49328289654EE6BC0D5D332835D622
+	A4AB32A55B7CCB2AB162CD2043DC0C56996E105ACE28A8A198BE71D02243B53D
+	C57C1A582AB4E02AD6CD669B6DD6A64D1B2D92514B27C5807AE2892760B29993
+	030D153009AC628253A64C3199D06A5358FCAC053970A04A986FDF7EFBAD59B7
+	575F7D95203BBA6EDDBA41889830550C23836D3AC10D36D840989E629A431C91
+	1E5ACCE38E1D3BB25D193D7A34B9EB422B2511455DD9845C76D9657012666362
+	055A6675134BDA7CD75D77496EF2ADF7E79C7B98FC9AD34C484CA734F6CE3BEF
+	342B239B37B5EFC474400649157BF4D147D121417677C2F414D31C628948BBD9
+	93C979A9E64BD7B3527104A1B1CCCC66ACB5F9E17C60A5955642980D00733B92
+	E07AC411474872DDFC687FC720C742414C8F2CACEB814B2EB984B4BD7AF5320B
+	356962CD60241DB7F96153C0A6990F46A22694BB01A65C3D443CF3CC33A5FEBA
+	DBE19E6AE9A597863968D020D0252D879132A0CD8D93A798161D4734DCC2B894
+	F0391194DA038C2B367EFC788965469296A88C052DFC575E79459A4DF7E7685E
+	262549AED0D20374E012C51EBF26D0B289978AB155335B2466208B25DB07767A
+	22C39E556520F48A9006329AA5C99CCEBEF5D65B29C4CC242E5D12B47A757AD0
+	4107B95933F264ABB7E79E7B5AB12EB408303581A218449C28616F73AF898214
+	5A6498DE451DF01F7CF0C164685911AC72354872A5E30819B57BEDB597251009
+	2D32344ACEC204543633DCD6A1042BF955575D25C6B088ADBFFEFA2FBDF49225
+	43D053CC4DA89C865BA8A2D521586EB92A414D71C5B132619A71A31927E0C3F7
+	8136211FD9CD7320EACA7CFDF5D7D49F55967D811BAB1C6669AE4CCC295DA34C
+	C253CC4CA2741D94749F26F5CDC45E4AC339CA07185604B9CBCBA6EAD25BC8D9
+	6C4F156AC5BCC26C891995655CD143499DB70A7AAC5011258E5AB6B05DBB76AD
+	50DDCA956D80B65C9ACC5C3E6142CE1C24E5AA5080B65C9ACC5C3E01DACC4152
+	AE0A3570F9C5E9FFD9679F4D61B893C915AC55F04D37DD74F7DD771385801595
+	10C4AD093F4D8EA8AEB8E28A55575D3541D28CE2F00B7F2BCEE4380A30F99134
+	C729D64D5FA458021317730E3BB9F638F7DC7313C4CC28CE877115C2B982F30A
+	5C7A7170E464CA1480E616998D2F8AC55786C3738EDEE40E2D9D9895EA5F41DD
+	E14612A852A4E38E08C4D7926D4064F23866E469549CB0F20F39E4102AB3F7DE
+	7B2B2792703DD15D31F271992687839146B99873082A971CA672B1C30F3BEC30
+	335B4FDF714F31336797AECD84CC452C87A87CE458D15447E93403027746F376
+	A5B1797290C4F50BFAF54FC82444B93467C890211C213DF0C0033BEDB413EA66
+	A6C18551F2C1DF117F55CE292D1773CE53E548B551620DD7CD45DBE45468D49A
+	45F8D39EA3D6F58E738B402F2E5338295CCC39DC17458F1A35CACC56AEE7F0C1
+	1366955DCC2B356AB974E3C5006AE21517EF5E5CBF2156326EE2D47B48548318
+	5740D75E7B2D87B41CACE3D28C8CFA059AFD947B7B1636567AF1F1D4282E0C38
+	4F902069F9B845ABB04BE03E4707623656177357C6E588F31787FEE2DAA80272
+	C1C0FD3C07CB30E5FA19AF04AE0454E6F8E38F87C6315B4791A798E6104B98BD
+	CCA5B5BC46ADB54C47961F6F9F3E7DCCE73D912EE6A79C728A3891485D31AF64
+	2A53A75719B53C0BC309D96CCFDA6BAFCD5227958FF44477DB45729709279D8B
+	397D974EC6A0B4F25457023C9089F2F41DF714B3CA72830D58C8A6063D692625
+	AE9A11E6280ED70B461EEF9618C15CB1E1DE261799D4C3CAEDEAABAF164F55C4
+	7088642C722BE2BE7D2315B9F14DFB313EB99C0754DC98294866457C1518EE32
+	8CF044C752E563959510C4C59C1EC61D7E828C1B8531CCC7E5CBAE01439D2E9B
+	EC3B8E6664FAF11473CB8AE0B8689B1C1DB5F8AD71F9EA7EC40E520B199F2EE9
+	74E80850252BCED3C5DAD4D74E96858C8786E4C32300BDB457CBC21AB5B481E7
+	27F204034F1AF5E5403B525C896BAD363FCECB420592093AABA89B3B6624D537
+	489D2E34798D5DCC51259B0AF763B929312F31F9705BCE2AAB4EC5F89CCAE33E
+	5E7A29A8662FE3FE957C10BBE0820BB8849728862CCF434C31A1C996F55B9C1D
+	E9703AB2ABE650EE56C9E560074893994578128180A7EFB8A7985BA2CBF19D90
+	C1CC7DAC42767449799A2759B3A042E011224EE75A1E2FF28466CD76F3C19F88
+	585CE3ACC993971DEA0FA559ADB1C61AEA680113EF1CC0C6F5BE6A0EE55A9338
+	82D75D5CF961BE314B83B18879FA8E7B8AC5156DF27DA1C5AE43A7664AA1D552
+	90A02C18386EC924E3CA63EEBA0EC9E2AD299E6F6692C8832AF78CA9CA0EE566
+	0D5D9A9332B1FE3083710952BF79F11D67128EF34316AF1A4F31B75C97E30BAD
+	9B329243D5E1332E316122057AF6ECE9F2E52D97CE452A20CF60342844254E39
+	AC22D2059999F011E3F737488E6317843C9DD66A6385D0E9E3A0355DCC1B14F3
+	A96199A1C55CE26D16DEF43C78B58A679DC60AB39812643E5013D11468D47990
+	99B0FA341B748C44F1A7C7FEC20DC39D4B387D03339618734AC39E775DCC7DC4
+	1A6C63998F2CD65A6B2D8A64AB23D5D5E2F9A9075E0FF0510F568D8210EF6A76
+	35E6F9035D817D9429E649AB43AB65E279264F2786B794E07ACE39E7F056D8C5
+	956C3D7DC73DC51AAEA79AE091846E7E3C8F2C70BF960B2230D6330A1EE2C973
+	44BA2DEAA620B593E5553C533151D4954D146FBF180124617597DA5B9B1FF77A
+	801E83E41D77DC214D50CB4B3DD1DDA621EF322D4EDCE6C775317FEDB5D7C4B0
+	E7560ADAFDB0B2903963510CC04CB89837165A1A806125CB212B283F59A28B2B
+	4C79868B8C052D1C767BFA1A5510E55BC61F933C027CE2CE902D685D4F74496E
+	7E9702ADEB872CBF9BA4D57609E63029BD9A2EE6E59990CDDD080614E7C0FCF6
+	005B6108F9E5303066BE4A78F9831F39C2FC78055D810D003B5A1E77F07A1A35
+	0972AEBE2C8ED681334E567A0DCA7ECC12F60F464EAD5672791F6C31CDA06E69
+	98AEC5779CA3566E7699AE30A4D10C0FA84C794F313349046DF6E5F2D29C4671
+	CFC5135B3DE08DCB9FD3736666DA6909C86530C7C216DF27486E2C227278EBCA
+	A30897E9CF91A3A59B6FBED93F89258955C1A919371916DF0A7A8A59A9245852
+	0B23734CC1949F89E3F081DFB6D1E4B849C8AB4E263165968B28115AB9AE41EF
+	E5AA4F25F2C904B4721A85BA7125E1FE8481CE6C2C3FDB04DE6A8E95B1FDA540
+	CBBD216604E74D65AC4F25B2CA04B4344C7ED2068D9B1F0E68B0362BD2ECD226
+	646E8B2B51ABF2E699211773CC285E617312C9EE02E3823B3B6CABC8B34613FE
+	747489AF07D2155AE5541982B69A2D6F0AD09667F3534D5442599E1A08D07A2A
+	2A7F6201DAFC61E659E300ADA7A2F22716A0CD1F669E350ED07A2A2A7F6201DA
+	FC61E659E300ADA7A2F22716A0CD1F669E350ED07A2A2A7F6201DAFC61E659E3
+	00ADA7A2F22716A0CD1F669E350ED07A2A2A7F6201DAFC61E659E300ADA7A2F2
+	2716A0CD1F669E350ED07A2A2A7F6201DAFC61E659E300ADA7A2F22716A0CD1F
+	669E350ED07A2A2A7F6201DAFC61E659E300ADA7A2F22716A0CD1F669E350ED0
+	7A2A2A7F6201DAFC61E659E300ADA7A2F227D6F2E8A38FAE49AD79252D7F03B4
+	26A5D7B0507ED4C1FDD58E4AD4A76EEE9C1995C8B7C13CDBB65BF8C7331B14AB
+	90400D5FEA517475741E26E40A759EDA675BE65F7B4BDDA03913C6CC1E353075
+	729F84ED0F1DDDAEEFC23F4C617E6A55AE59870AD17515CAD727DBA987FA4855
+	44A6EBA866B52A9DA2ABF3A99B34F15F7FDEBC3AA5524AAFDE0BFFA64BD58AB3
+	0AAAED5A5B1D9D87B5D602BD38C1006D71B0B45A12A0B514529C6080B638585A
+	2D09D05A0A294EB096FBDA69836AB9F5AA6DE955E841B51CB55DAE5FC03FB391
+	AD7AF6318395A307FFF397CF2A574844CE567B2324CAC7AAE5A8955654A1B5F3
+	268F9F39ACBF14D7E97F535A75E83ABC59B3F9B3A64E1FDA4D981D878C6BDDA3
+	5EE8C27CD772D4564D89266CE02AE52A41D014A85AAD2A5D509380B6D24ACC66
+	FE4D0E5AB59E94001893CE264E296AD524A0655955D5346FF337D9DC3033EA5A
+	687C7108A37DC56994DD129655D758EB3CF25FC6B99D26FFE126316AF30F539A
+	160468D3682D176902B4B980294D2503B469B4968B3401DA5CC094A69201DA34
+	5A0B69923450DFAF5F79FFAC4D5E72ABAFEF97A497F2C535D13F06533E056637
+	A7302167179B126B16A02D5181D94D1EA0CD2E3625D62C405BA202B39B3C409B
+	5D6C4AAC5980B644056637798036BBD89458B3006D890ACC6EF2006D76B129B1
+	66FF0733F94C8531B612EB0000000049454E44AE426082
+	]]>
+</Picture>
+
+</Symbol>

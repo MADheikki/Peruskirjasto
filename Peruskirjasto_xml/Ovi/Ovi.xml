@@ -1,0 +1,1152 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Symbol IsArchivable="false" IsPlaceable="true" MainGUID="A0C4C407-75A2-4349-917A-CD9A4245A5A6" MigrationValue="Normal" Owner="1196638531" Signature="1146313037" Version="40">
+<Ancestry SectVersion="1" SectionFlags="0" SubIdent="0" Template="false">
+	<MainGUID>F938E33A-329D-4A36-BE3E-85E126820996</MainGUID>
+	<MainGUID>103E8D2C-8230-42E1-9597-46F84CCE28C0</MainGUID>
+	<MainGUID>6ACDA889-69B2-4EC5-936C-CB1DA7032A92</MainGUID>
+	<MainGUID>F6AE9687-2BC7-4D47-88C9-8F793E1DE2D6</MainGUID>
+	<MainGUID>11E85B84-8DD1-491B-A2FE-337454A91545</MainGUID>
+</Ancestry>
+
+<CalledMacros SectVersion="2" SectionFlags="0" SubIdent="0">
+	<Macro>
+		<MName><![CDATA["Door_Panel_Collection"]]></MName>
+		<MainGUID>881E9E65-1F53-4E36-A9E7-8161EAB4F85F</MainGUID>
+	</Macro>
+</CalledMacros>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_3D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+
+
+material gs_frame_mat
+
+addz -gs_frame_thk*wido_reveal_side
+
+mul 1,1,-1
+
+! jos ollaan 2D-näkymässä ja tarkkuustaso on tarkka,
+! tehdään leikkaus oven keskeltä projisointia varten
+if glob_view_type = 2 then 
+	pen gs_pen_2D
+	if iDetlevel2D =DETLEVEL_2D_SIMPLE then iDetlevel3D = DETLEVEL_3D_SIMPLE
+	gs_open_3D = gs_open_2D
+	rotx -90
+
+	addy B/2
+	rotx -90
+	cutplane
+	del 2
+else
+	addz -gs_frame_thk
+endif
+
+
+!sphere .1
+
+
+profiilitarkenne = ""
+if iDetlevel3D = DETLEVEL_3D_SIMPLE then 	profiilitarkenne = " simple"
+
+!if glob_feedback_mode and glob_view_type = 2 then 	rotx 90
+
+if iDetlevel3D = DETLEVEL_3D_OFF then end
+
+building_material aine
+if gs_frame_mat <> 0 then material gs_frame_mat
+
+pen gs_frame_pen
+
+if karmin_tyyppi = "Oma profiili" then
+	_profiili = karmin_profiili
+	_muoto= "karmin muoto"
+	_flip = peilaa_karmin_profiili
+	addz karmin_profiilin_nollapiste
+	gosub "profiilista ja muodosta tube"
+	del 1
+else ! suorakaide tai huullettu
+	leveys = gs_frame_thk
+	leveys2 = gs_frame_thk-gs_leaf_thk ! karmin_huulloksen_syvyys
+	korkeus = gs_frame_width
+	korkeus2 = gs_frame_width-karmin_huulloksen_leveys
+	gosub karmin_tyyppi
+	gosub "karmin muoto"
+	TUBE nprof,nmuoto,  1+2+16+32,			  get(nsp)
+endif
+
+if kynnyksen_tyyppi = "Oma profiili" then
+	_profiili = kynnyksen_profiili
+	_muoto= "kynnyksen muoto"
+	_flip = peilaa_kynnyksen_profiili
+	addz karmin_profiilin_nollapiste
+	gosub "profiilista ja muodosta tube"
+	del 1
+else ! suorakaide tai huullettu
+	leveys = gs_frame_thk
+	leveys2 = gs_frame_thk-gs_leaf_thk !kynnyksen_huulloksen_syvyys
+	korkeus = gs_frame_width
+	korkeus2 = gs_frame_width-kynnyksen_huulloksen_leveys
+	gosub kynnyksen_tyyppi
+	gosub "kynnyksen muoto"
+	TUBE nprof,nmuoto,  1+2+16+32,			  get(nsp)
+endif
+
+
+addx a/2
+add  -ovideltax, ovideltay, gs_frame_thk
+	!sphere .01
+	roty 180+gs_open_3d
+	
+	! saranat
+	if iDetlevel3D = DETLEVEL_3D_DETAILED then
+		h = 0.1 : r = 0.005
+		building_material saranoiden_aine
+		if saranoiden_pinta <> 0 then material saranoiden_pinta
+		addy .26 : gosub "kapseli" : del 1
+		addy .56 : gosub "kapseli" : del 1
+		addy B_lehti-.26 : gosub "kapseli" : del 1
+		addy B_lehti-.56 : gosub "kapseli" : del 1
+	endif
+
+	! ovilehti	
+	building_material aine
+	pen gs_leaf_pen
+	if gs_leaf_mat <> 0 then material gs_leaf_mat
+
+!	if iDetlevel3D = DETLEVEL_3D_SIMPLE then 
+!		block A_lehti, B_lehti, gs_leaf_thk
+!	else
+		!block A_lehti, B_lehti, gs_leaf_thk
+		!call "Yksinkertainen ovilehti" parameters 	a=A_lehti , 
+		call oma_ovilehti parameters all	a=A_lehti , 
+											b=B_lehti , 
+											zzyzx = gs_leaf_thk,
+											pinta = gs_leaf_mat
+!	endif
+
+	! kahva
+	if iDetlevel3D = DETLEVEL_3D_DETAILED then
+		add A_lehti - 0.1, 0.960, 0
+			roty 180
+				!call kahvan_malli parameters all
+				addy 1.04-.96
+				!call "Hoppe sylinterirengas" parameters all
+				del 1
+			del 1
+			addz gs_leaf_thk
+			mul 1,1,-1
+			roty 180
+				!call kahvan_malli parameters all
+				addy 1.04-.96
+				!call "Hoppe vääntönuppi" parameters all
+				del 1
+			del 3
+		del 1
+	endif
+del 3
+
+!model wire
+!prism_ 10, gs_frame_thk,
+!		-A/2,	0,	15,
+!		A/2,	0,	15,
+!		A/2,	B,	15,
+!		-A/2,	B,	15,
+!		-A/2,	0,	-1,
+!		-A/2 + gs_frame_width,	gs_frame_width,		15,
+!		A/2 - gs_frame_width,	gs_frame_width,		15,
+!		A/2 - gs_frame_width,	B - gs_frame_width,	15,
+!		-A/2 + gs_frame_width,	B - gs_frame_width,	15,
+!		-A/2 + gs_frame_width,	gs_frame_width,		-1
+
+
+if glob_view_type = 2 then cutend
+
+
+end
+
+"profiilista ja muodosta tube":
+!in:	_profiili: profiilin numero
+!in:	_muoto: funktion nimi, tuottaa tubemuodon (päiden tangentit + itse muoto. x,y,z)
+!in:	_flip: peilataanko profiili
+	komponenttienMaara = 1
+	gosub "profiilitiedot"
+	profiiliosanRakennusaine = 1
+	profiiliosanPinta = 1
+	profiiliosanKyna = 1
+	for profiilinKomponentti = 1 to komponenttienMaara ! =1 jos ei omaa profiilia käytössä
+		gosub "profiilista tubeputit"
+		gosub _muoto
+		tube{2} profiiliosanPinta, profiiliosanPinta, profiiliosanPinta,
+				profiilinPisteita, (NSP-4*profiilinPisteita)/4, 1+2+16+32,
+				get (NSP)
+	next profiilinKomponentti
+return
+
+
+"flip xy":
+COOR{3} 2, 0,
+        0,0,0,
+        0,1,0,
+        1,0,0,
+        0,0,1
+return
+
+"karmin muoto":
+_kulma = -90
+	nmuoto = 6
+	put		-A/2,	-1,	0, _kulma
+	put		-A/2,	 0,	0, _kulma
+	put		-A/2,	 B,	0, _kulma
+	put		 A/2,	 B,	0, _kulma
+	put		 A/2,	 0,	0, _kulma
+	put		 A/2,	-1,	0, _kulma
+return
+
+"kynnyksen muoto":
+_kulma = -90
+	nmuoto = 4
+	put		 A/2+1	,	 0,	0, _kulma
+	put		 A/2-EPS,	 0,	0, _kulma
+	put		-A/2+EPS,	 0,	0, _kulma
+	put		-A/2-1	,	 0,	0, _kulma
+
+return
+
+"Suorakaide":
+	_stat = 15
+	nprof = 4
+	put 0		, 0		,_stat
+	put leveys	, 0		, _stat
+	put leveys	, korkeus	, _stat
+	put 0		, korkeus, _stat
+return
+
+"Yksihuulteinen":
+	_stat = 15
+	nprof = 6
+	put 0		, 0		,_stat
+	put leveys	, 0		, _stat
+	put leveys	, korkeus2	, _stat
+	put leveys2	, korkeus2	, _stat
+	put leveys2	, korkeus, _stat
+	put 0		, korkeus, _stat
+return
+
+"kapseli":
+! params: r, h
+	rotz 90
+	addx -r-h/2
+	revolve 5, 360, 128+256, 
+		0		,0	,0+1,
+		r		,0	,900+1,
+		r		,r	,3000+1,
+		r+h		,r	,0+1,
+		r+h+r	,0	,1000+1
+	del 2
+return 
+
+
+"profiilitiedot":
+!in: _profiili
+!out: komponenttienMaara
+
+	dim komponentinTyyppi[] !- rakenne, pinta, muu. ei käytetä
+	
+	komponenttienMaara=0
+	n = REQUEST ("Profile_components", _profiili, komponenttienMaara, komponentinTyyppi)
+	!n2 = REQUEST ("Profile_default_boundingbox",  _profiili, bb_xmin, bb_ymin, bb_xmax, bb_ymax)
+	
+	if n then
+		dim _bShowPart[]
+	
+		dim profiilinRaakadata[]
+	
+		n = REQUEST ("Profile_default_geometry", _profiili, profiilinRaakadata)		! n1, n2, ..., nn, x11, y11,s11 
+		! raakadatassa ensin pisteiden määrät per komponentti, sitten 5 dataa per piste
+	
+		dim ensimmaisetPisteet[]
+		dim viimeisetPisteet[]
+		ensimmaisetPisteet[1] = komponenttienMaara + 1
+		for _i = 2 to komponenttienMaara
+			ensimmaisetPisteet[_i] = ensimmaisetPisteet[_i - 1] + profiilinRaakadata[_i - 1] * 5
+			viimeisetPisteet[_i-1] = ensimmaisetPisteet[_i] - 1
+		next _i
+		viimeisetPisteet[komponenttienMaara] = vardim1(profiilinRaakadata)	
+	else
+		print "Profiilin komponentteja löydy"
+	endif
+return 
+
+"profiilista tubeputit":
+! in: _profiili, komponenttienMaara, _flip
+! out: profiiliosanRakennusaine,profiiliosanPinta,profiiliosanKyna, tubeputit pinossa
+
+!	for profiilinKomponentti = 1 to komponenttienMaara
+!		print "haetaan tubeputit komponentille", profiilinKomponentti
+		dim profiiliosanPinnat[]
+		n = REQUEST{3} ("Profile_component_info", _profiili, profiilinKomponentti, "gs_profile_comp_surfaces", profiiliosanPinnat)
+	
+		profiiliosanRakennusaine = 1
+		profiiliosanPinta = 1
+		profiiliosanKyna = 1
+		n = REQUEST{3} ("Profile_component_info", _profiili, profiilinKomponentti, "gs_profile_bmat", profiiliosanRakennusaine)
+		n = REQUEST{3} ("Profile_component_info", _profiili, profiilinKomponentti, "gs_profile_surface", profiiliosanPinta)
+		n = REQUEST{3} ("Profile_component_info", _profiili, profiilinKomponentti, "gs_profile_outlinepen", profiiliosanKyna)
+	
+		building_material profiiliosanRakennusaine
+		pen profiiliosanKyna
+	
+		tubemaski = 1+2+16+32 +128+256
+	
+		profiilinPisteita = (viimeisetPisteet[profiilinKomponentti] - ensimmaisetPisteet[profiilinKomponentti] + 1) / 5
+	
+!		put profiilinPisteita,	! profiilin pisteitä
+!			4,			! kehän pisteitä 
+!			tubemaski	
+		
+		_surfIdx = 1
+		for _i = ensimmaisetPisteet[profiilinKomponentti] to viimeisetPisteet[profiilinKomponentti] step 5
+			edgeVisible			= profiilinRaakadata[_i+2]
+			verticalEdgeVisible	= profiilinRaakadata[_i+3]
+			additionalStatus	= profiilinRaakadata[_i+4]
+			poly2Status = edgeVisible + additionalStatus
+			tubeStatus  = additionalStatus
+			if additionalStatus >= 0 and verticalEdgeVisible = 0 then
+				tubeStatus = tubeStatus + 1
+			endif
+	
+			put profiilinRaakadata[_i]*(1-2*_flip), 
+				profiilinRaakadata[_i + 1], 
+				tubeStatus,
+				profiiliosanPinnat[_surfIdx]
+	
+!			print "putting",  profiilinRaakadata[_i], 
+!				profiilinRaakadata[_i + 1], 
+!				tubeStatus
+
+	
+			_surfIdx = _surfIdx + 1
+		next _i
+	
+!		print nsp
+!		set material profiiliosanPinta
+!		tube{2} profiiliosanPinta, profiiliosanPinta, profiiliosanPinta,get (NSP), 
+!			-10,0,90,0,
+!			0,0,90,0,
+!			1,0,90,0,
+!			1+1,0,90,0
+
+!	next profiilinKomponentti
+return
+
+
+
+]]>
+</Script_3D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_2D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+
+!text2 0,.3, gs_frame_width
+!text2 0,.4, gs_frame_thk
+
+add2 0, -gs_frame_thk* not(wido_reveal_side)
+
+pen gs_pen_2D
+
+add2  a/2-ovideltax, gs_frame_thk
+rot2 180
+HOTSPOT2 0           		, 0       			, unID, gs_open_2D, 6+512   :unID=unID+1 ! keskip. 
+HOTSPOT2 a           		, 0       			, unID, gs_open_2D, 4+128    :unID=unID+1 ! base
+HOTSPOT2 A_lehti*COS(gs_open_2D), -A_lehti*SIN(gs_open_2D), unID, gs_open_2D, 5   :unID=unID+1
+del 2
+
+if iDetlevel2D =DETLEVEL_2D_SYMBOLIC then
+	add2 -a/2,0
+
+		fill gs_fill_type
+		! karmit
+		POLY2_B{2}		4, 1+2*gs_fill+4, gs_fill_pen, gs_back_pen, 0,0,0,
+			0				,0,1, 
+			gs_frame_width	,0,1,
+			gs_frame_width	,gs_frame_thk,1,
+			0				,gs_frame_thk,1
+		POLY2_B{2}		4, 1+2*gs_fill+4, gs_fill_pen, gs_back_pen, 0,0,0,
+			a				,0,1,
+			a-gs_frame_width,0,1,
+			a-gs_frame_width,gs_frame_thk,1,
+			a				,gs_frame_thk,1
+
+		! avautumiskaari
+		ARC2 A-gs_frame_width, gs_frame_thk, A-2* gs_frame_width,  180-gs_open_2D,180
+		add2 A-gs_frame_width, gs_frame_thk
+		rot2 -180- gs_open_2D
+		line2 0,0,A-2* gs_frame_width,0
+		del 2
+
+	del 1
+
+else
+	if gs_fill then
+		! täytteet
+		pen gs_fill_pen
+		fill gs_fill_type
+		project2{3} 3,270,3+32,4   ,gs_back_pen,0,0,0
+	endif
+	! reunat
+	pen gs_pen_2D
+	project2 3, 270,2+32
+endif
+
+!circle2 0,0,.05
+!
+!line2 -A/2,0,A/2,0
+!line2 A/2-.3,.3,A/2,0
+!circle2 A/2, .2, 0.1
+!
+!rect2 -A/2,0,-A/2+gs_frame_width,gs_frame_thk
+!
+!text2 0,.3, "rev:"+str(wido_reveal_side, 1, 0)
+!text2 0,.4, "mir:"+str(symb_mirrored, 1, 0)
+!text2 0,.5, "rot:"+str(symb_rotangle, 1, 0)
+!
+!if (symb_rotangle<>0) exor wido_reveal_side then: txt = "Ulkoseinällä": else :txt="Sisäseinällä": endif
+!text2 0,.6, txt
+!
+!if (symb_mirrored exor wido_reveal_side) then: txt = "Oikeakätinen": else :txt="Vasenkätinen": endif
+!text2 0,.7, txt+" (ulkoa katsoen)"
+!
+!if symb_rotangle=0 then: txt = "Sisään aukeava": else :txt="Ulos aukeava": endif
+!text2 0,.8, txt
+]]>
+</Script_2D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_1D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+unID = 34268
+
+A_lehti = A
+
+if karmin_tyyppi = "Suorakaide" then 
+	A_lehti = A-2*gs_frame_width
+	B_lehti = B-gs_frame_width
+	ovideltax = gs_frame_width
+endif
+if karmin_tyyppi = "Yksihuulteinen" then 
+	A_lehti = A-2*gs_frame_width+2*karmin_huulloksen_leveys
+	B_lehti = B-gs_frame_width+ karmin_huulloksen_leveys
+	ovideltax = gs_frame_width-karmin_huulloksen_leveys
+endif
+
+if kynnyksen_tyyppi = "Suorakaide" then 
+	B_lehti = B_lehti-gs_frame_width
+	ovideltay = gs_frame_width
+endif
+if kynnyksen_tyyppi = "Yksihuulteinen" then 
+	B_lehti = B_lehti-gs_frame_width+ kynnyksen_huulloksen_leveys
+	ovideltay = gs_frame_width-kynnyksen_huulloksen_leveys
+endif
+
+
+parameters gs_frame_thk = 0.17, gs_frame_width = .054
+
+
+! -------------------------- Esitystavat
+
+DETLEVEL_2D_MVO			= 1
+DETLEVEL_2D_SCSENS		= 2
+DETLEVEL_2D_DETAILED	= 3
+DETLEVEL_2D_SIMPLE		= 4
+DETLEVEL_2D_DRAFT		= 5
+DETLEVEL_2D_SYMBOLIC	= 6
+DETLEVEL_3D_MVO			= 1
+DETLEVEL_3D_SCSENS		= 2	! Unused
+DETLEVEL_3D_DETAILED	= 3
+DETLEVEL_3D_SIMPLE		= 4
+DETLEVEL_3D_DRAFT		= 5
+DETLEVEL_3D_OFF			= 6
+
+dim stDetlevel2D[]
+	stDetlevel2D[1]	= `Esitystavan mukaan`
+	stDetlevel2D[2]	= `Mittakaavassa`
+	stDetlevel2D[3]	= `Täysi`
+	stDetlevel2D[4]	= `Keskitaso`
+	stDetlevel2D[5]	= `Matala`
+	stDetlevel2D[6]	= `Symboli`
+dim stDetlevel3D[]
+	stDetlevel3D[1]	= `Esitystavan mukaan`
+	stDetlevel3D[2]	= `Mittakaavassa`
+	stDetlevel3D[3]	= `Täysi`
+	stDetlevel3D[4]	= `Yksinkertaistettu`
+	stDetlevel3D[5]	= `Kaaviomainen`
+	stDetlevel3D[6]	= `Pois`
+]]>
+</Script_1D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_PR SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_PR>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_UI SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+UI_DIALOG "Oven asetukset"
+
+sivu = 0
+rivivali = 22
+ensimmainen_rivi = 20
+tab = 444/4.2-10
+inlev = tab-10
+inkor = rivivali-3
+outlev = inlev
+outkor = inkor
+nudge = 3
+ 
+sivu = sivu+1
+UI_PAGE sivu, -1, "Asetukset", "" ! ----------------------------- Asetukset
+    x = 10
+    y = ensimmainen_rivi
+
+    UI_OUTFIELD "Leveys:",     x, y
+        UI_INFIELD "A", x+tab,y-nudge, inlev,inkor
+                y=y+rivivali
+    UI_OUTFIELD "Korkeus:",     x, y
+        UI_INFIELD "B", x+tab,y-nudge, inlev,inkor
+                y=y+rivivali
+
+    UI_OUTFIELD "Karmin pinta:",     x, y
+        UI_INFIELD "gs_frame_mat", x+tab,y-nudge, inlev*2,inkor
+                y=y+rivivali
+    UI_OUTFIELD "Ovilehti:",     x, y
+        UI_INFIELD "ovilehden_malli", x+tab,y-nudge, inlev*2,inkor
+                y=y+rivivali
+    UI_OUTFIELD "Oven pinta:",     x, y
+        UI_INFIELD "gs_leaf_mat", x+tab,y-nudge, inlev*2,inkor
+                y=y+rivivali
+    UI_OUTFIELD "Painike:",     x, y
+        UI_INFIELD "kahvan_malli", x+tab,y-nudge, inlev*2,inkor
+                y=y+rivivali
+
+UI_PICT "skando_logo_154x170.png", 290, 10, 154,170, 1
+
+sivu = sivu+1
+UI_PAGE sivu, -1, "Esitystavat", "" ! ----------------------------- Esitystavat
+
+    x = 10
+    y = ensimmainen_rivi
+
+tab = 444/4-10
+inlev = tab-10
+inkor = rivivali-3
+outlev = inlev
+outkor = inkor
+nudge = 3
+
+
+	UI_STYLE 0,1
+		UI_OUTFIELD "2D-esitys"		,x, y
+	UI_STYLE 0,0
+	y=y+rivivali
+	
+	UI_OUTFIELD		`Detaljitaso`	,x		,y
+	UI_INFIELD	"iDetlevel2D"		,x+tab	,y,inlev	,inkor
+	y=y+rivivali
+	
+	UI_OUTFIELD "Aukeama"	,x		,y
+	UI_INFIELD "gs_open_2D"		,x+tab	,y, inlev	,inkor
+	y=y+rivivali
+
+
+	UI_OUTFIELD "Ääriviivan kynä"	,x		,y
+	UI_INFIELD "gs_pen_2D"		,x+tab	,y, inlev	,inkor
+	y=y+rivivali
+	
+!	UI_OUTFIELD "Ääriviivan tyyppi"	,x		,y
+!	UI_INFIELD "gs_line_type"		,x+tab	,y, inlev	,inkor
+!	y=y+rivivali
+	
+	UI_OUTFIELD "Symbolin täyte"	,x		,y
+	UI_INFIELD "gs_fill"			,x+tab	,y, inlev	,inkor
+	y=y+rivivali
+	
+	!IF gs_fill THEN
+	
+	UI_OUTFIELD "Täytteen tyyppi"	,x		,y, outlev	,outkor, 4*(not(gs_fill))
+	UI_INFIELD "gs_fill_type"		,x+tab	,y, inlev	,inkor
+	y=y+rivivali
+	
+	UI_OUTFIELD "Täytteen kynä"		,x		,y, outlev	,outkor, 4*(not(gs_fill))
+	UI_INFIELD "gs_fill_pen"		,x+tab	,y, inlev	,inkor
+	y=y+rivivali
+	
+	UI_OUTFIELD "Taustan kynä",x	,y, outlev	,outkor, 4*(not(gs_fill) )
+	UI_INFIELD "gs_back_pen"		,x+tab	,y, inlev	,inkor
+	y=y+rivivali
+	
+	!ENDIF
+	
+	x = 444/2
+	y = ensimmainen_rivi 
+	
+	ui_style 0,1
+		ui_outfield "3D-esitys"		,x, y
+	ui_style 0,0
+	y=y+rivivali
+	
+	ui_outfield		`Detaljitaso `	,x		,y,outlev	,outkor
+	ui_infield	"iDetlevel3D"		,x+tab	,y,inlev	,inkor
+	y=y+rivivali
+
+	UI_OUTFIELD "Aukeama"	,x		,y
+	UI_INFIELD "gs_open_3D"		,x+tab	,y, inlev	,inkor
+	y=y+rivivali
+
+	
+	UI_OUTFIELD "Karmin kynä"	,x		,y
+	UI_INFIELD "gs_frame_pen"		,x+tab	,y, inlev	,inkor
+	y=y+rivivali
+	UI_OUTFIELD "Ovilehden kynä"	,x		,y
+	UI_INFIELD "gs_leaf_pen"		,x+tab	,y, inlev	,inkor
+	y=y+rivivali
+]]>
+</Script_UI>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_VL SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+!values "A" 	.790,	
+!			.870,
+!			.890,
+!			.970,
+!			.990
+!
+!
+!values "B" 	1.890,
+!			2.070,
+!			2.090,
+!			2.290,
+!			2.350
+
+
+values "ovilehden_malli", "Skando KS1 ovilehti", "Skando KS2 ovilehti","Skando KS3 ovilehti","Skando KS4 ovilehti"
+
+values "kahvan_malli", "Hoppe Amsterdam painike"
+
+
+values "karmin_tyyppi" "Suorakaide", "Yksihuulteinen", "Oma profiili"
+values{2} "karmin_profiilin_nollapiste", 0,"Sisäpuoli", gs_frame_thk, "Ulkopuoli"
+
+values "kynnyksen_tyyppi" "Suorakaide", "Yksihuulteinen", "Oma profiili"
+values{2} "kynnyksen_profiilin_nollapiste", 0,"Sisäpuoli", gs_frame_thk, "Ulkopuoli"
+
+dim gs_pt[]
+call "Door_Panel_Collection" parameters returned_parameters gs_pt
+values "oma_ovilehti" "Yksinkertainen ovilehti", gs_pt
+
+
+values{2} "iDetlevel2D"		\
+	!	DETLEVEL_2D_MVO,		stDetlevel3D[DETLEVEL_2D_MVO],
+	!	DETLEVEL_2D_SCSENS,		stDetlevel2D[DETLEVEL_2D_SCSENS],
+	DETLEVEL_2D_DETAILED,	stDetlevel2D[DETLEVEL_2D_DETAILED],
+	DETLEVEL_2D_SIMPLE,		stDetlevel2D[DETLEVEL_2D_SIMPLE],
+	!	DETLEVEL_2D_DRAFT,		stDetlevel2D[DETLEVEL_2D_DRAFT],
+	DETLEVEL_2D_SYMBOLIC,	stDetlevel2D[DETLEVEL_2D_SYMBOLIC]
+
+values{2} "iDetlevel3D"	 \
+	!	DETLEVEL_3D_MVO,		stDetlevel3D[DETLEVEL_3D_MVO],
+	DETLEVEL_3D_DETAILED,	stDetlevel3D[DETLEVEL_3D_DETAILED],
+	DETLEVEL_3D_SIMPLE,		stDetlevel3D[DETLEVEL_3D_SIMPLE],
+	!	DETLEVEL_3D_DRAFT,		stDetlevel3D[DETLEVEL_3D_DRAFT],
+	DETLEVEL_3D_OFF,		stDetlevel3D[DETLEVEL_3D_OFF]
+
+]]>
+</Script_VL>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_FWM SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_FWM>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_BWM SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_BWM>
+
+<ParamSection SectVersion="27" SectionFlags="0" SubIdent="0">
+	<ParamSectHeader>
+		<AutoHotspots>false</AutoHotspots>
+		<HoleBits>
+			<WDBit_3DFrame/>
+		</HoleBits>
+		<StatBits>
+			<STBit_UIDefault/>
+			<STBit_FixSize/>
+			<STBit_UIUseHierarchicalPages/>
+		</StatBits>
+		<WDLeftFrame>0</WDLeftFrame>
+		<WDRightFrame>0</WDRightFrame>
+		<WDTopFrame>0</WDTopFrame>
+		<WDBotFrame>0</WDBotFrame>
+		<LayFlags>65535</LayFlags>
+		<WDMirrorThickness>0</WDMirrorThickness>
+		<WDWallInset>-1</WDWallInset>
+	</ParamSectHeader>
+	<Parameters>
+		<Length Name="A">
+			<Description><![CDATA["Leveys"]]></Description>
+			<Fix/>
+			<Value>0.99</Value>
+		</Length>
+		<Length Name="B">
+			<Description><![CDATA["Korkeus"]]></Description>
+			<Fix/>
+			<Value>2.09</Value>
+		</Length>
+		<Length Name="ZZYZX">
+			<Description><![CDATA[""]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>0.17</Value>
+		</Length>
+		<BuildingMaterial Name="aine">
+			<Description><![CDATA["Rakennusaine"]]></Description>
+			<Value>49</Value>
+		</BuildingMaterial>
+		<BuildingMaterial Name="saranoiden_aine">
+			<Description><![CDATA["Saranoiden rakennusaine"]]></Description>
+			<Value>35</Value>
+		</BuildingMaterial>
+		<Material Name="saranoiden_pinta">
+			<Description><![CDATA["Saranoiden pintamateriaali"]]></Description>
+			<Value>13</Value>
+		</Material>
+		<Integer Name="AC_WallContours">
+			<Description><![CDATA["Seinän ääriviiva (0-ei,1-kaikki,2-pää,3-reuna)"]]></Description>
+			<Fix/>
+			<Value>2</Value>
+		</Integer>
+		<Integer Name="AC_Hole_Hotspot_Control">
+			<Description><![CDATA["Tartuntapisteet 0-Ei,1-2D,2-3D,3-Kaikki"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>3</Value>
+		</Integer>
+		<Boolean Name="AC_show2DHotspotsIn3D">
+			<Description><![CDATA["Automaattiset apupisteet 3D:ssä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>0</Value>
+		</Boolean>
+		<Length Name="AC_Sill_To_Curr_Story">
+			<Description><![CDATA["Alareuna tähän kerrokseen"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Unique/>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>0</Value>
+		</Length>
+		<Length Name="ac_bottomlevel">
+			<Description><![CDATA["Alareunan korko"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>1</Value>
+		</Length>
+		<Length Name="ac_toplevel">
+			<Description><![CDATA["Yläreunan korko"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>0</Value>
+		</Length>
+		<Boolean Name="AC_HoleSideMaterial">
+			<Description><![CDATA["Aukolla on seinän sivun materiaali"]]></Description>
+			<Fix/>
+			<Value>0</Value>
+		</Boolean>
+		<Boolean Name="AC_HoleMaterialCurved">
+			<Description><![CDATA["Aukon muoto kaartuu seinän mukaan"]]></Description>
+			<Fix/>
+			<Value>0</Value>
+		</Boolean>
+
+		<!-- gs_door_frame: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Title Name="gs_door_frame">
+			<Description><![CDATA["Ovikarmi"]]></Description>
+			<Fix/>
+		</Title>
+		<Length Name="gs_frame_thk">
+			<Description><![CDATA["Karmin paksuus"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0.17</Value>
+		</Length>
+		<Length Name="gs_frame_width">
+			<Description><![CDATA["Karmin leveys"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0.054</Value>
+		</Length>
+		<String Name="karmin_tyyppi">
+			<Description><![CDATA[""]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA["Yksihuulteinen"]]></Value>
+		</String>
+		<Length Name="karmin_huulloksen_syvyys">
+			<Description><![CDATA[""]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0.01</Value>
+		</Length>
+		<Length Name="karmin_huulloksen_leveys">
+			<Description><![CDATA[""]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0.01</Value>
+		</Length>
+		<Profile Name="karmin_profiili">
+			<Description><![CDATA[""]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>43</Value>
+		</Profile>
+		<Boolean Name="peilaa_karmin_profiili">
+			<Description><![CDATA[""]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>1</Value>
+		</Boolean>
+		<Length Name="karmin_profiilin_nollapiste">
+			<Description><![CDATA[""]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Length>
+
+		<!-- Ovi_sp0_A: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Title Name="Ovi_sp0_A">
+			<Description><![CDATA["Kynnys"]]></Description>
+		</Title>
+		<String Name="kynnyksen_tyyppi">
+			<Description><![CDATA[""]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA["Suorakaide"]]></Value>
+		</String>
+		<Length Name="kynnyksen_huulloksen_syvyys">
+			<Description><![CDATA[""]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Length>
+		<Length Name="kynnyksen_huulloksen_leveys">
+			<Description><![CDATA[""]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Length>
+		<Profile Name="kynnyksen_profiili">
+			<Description><![CDATA[""]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>43</Value>
+		</Profile>
+		<Boolean Name="peilaa_kynnyksen_profiili">
+			<Description><![CDATA[""]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Boolean>
+		<Length Name="kynnyksen_profiilin_nollapiste">
+			<Description><![CDATA[""]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Length>
+
+		<!-- gs_door_panel: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Title Name="gs_door_panel">
+			<Description><![CDATA["Ovilevy"]]></Description>
+			<Fix/>
+		</Title>
+		<Length Name="gs_leaf_thk">
+			<Description><![CDATA["Levyn paksuus"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0.09</Value>
+		</Length>
+		<String Name="oma_ovilehti">
+			<Description><![CDATA[""]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA["Yksinkertainen ovilehti"]]></Value>
+		</String>
+		<String Name="kahvan_malli">
+			<Description><![CDATA["Kahvan malli"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA["Hoppe Amsterdam painike"]]></Value>
+		</String>
+
+		<!-- gs_2D_representation: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Title Name="gs_2D_representation">
+			<Description><![CDATA["2D-esitys"]]></Description>
+			<Fix/>
+		</Title>
+		<Integer Name="iDetlevel2D">
+			<Description><![CDATA["LOD"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>6</Value>
+		</Integer>
+		<Angle Name="gs_open_2D">
+			<Description><![CDATA["Aukeamiskulma 2D:ssä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>90</Value>
+		</Angle>
+		<PenColor Name="gs_pen_2D">
+			<Description><![CDATA["2D-kynä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>3</Value>
+		</PenColor>
+		<Boolean Name="gs_fill">
+			<Description><![CDATA["Näytä täyte"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>1</Value>
+		</Boolean>
+		<FillPattern Name="gs_fill_type">
+			<Description><![CDATA["Täytteen tyyppi"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>65</Value>
+		</FillPattern>
+		<PenColor Name="gs_fill_pen">
+			<Description><![CDATA["Täytteen kynä"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>1</Value>
+		</PenColor>
+		<PenColor Name="gs_back_pen">
+			<Description><![CDATA["Täytteen taustan kynä"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>19</Value>
+		</PenColor>
+
+		<!-- gs_3D_representation: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Title Name="gs_3D_representation">
+			<Description><![CDATA["3D-esitys"]]></Description>
+			<Fix/>
+		</Title>
+		<Integer Name="iDetlevel3D">
+			<Description><![CDATA["LOD"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>3</Value>
+		</Integer>
+		<Angle Name="gs_open_3D">
+			<Description><![CDATA["Aukeamiskulma 3D:ssä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Angle>
+		<PenColor Name="gs_frame_pen">
+			<Description><![CDATA["Karmin kynä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>2</Value>
+		</PenColor>
+		<PenColor Name="gs_leaf_pen">
+			<Description><![CDATA["Levyn kynä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>2</Value>
+		</PenColor>
+
+		<!-- gs_door_material: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Title Name="gs_door_material">
+			<Description><![CDATA["Materiaalit"]]></Description>
+			<Fix/>
+		</Title>
+		<Material Name="gs_frame_mat">
+			<Description><![CDATA["Karmin materiaali"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>124</Value>
+		</Material>
+		<Material Name="gs_leaf_mat">
+			<Description><![CDATA["Lehden materiaali"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>124</Value>
+		</Material>
+
+		<!-- ac_details: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Title Name="ac_details">
+			<Description><![CDATA["Detaljit"]]></Description>
+			<Fix/>
+		</Title>
+		<Length Name="ac_left_oversize">
+			<Description><![CDATA["AC vasen asennusvara"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Length>
+		<Length Name="ac_right_oversize">
+			<Description><![CDATA["AC oikea asennusvara"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Length>
+		<Length Name="ac_upper_oversize">
+			<Description><![CDATA["AC yläasennusvara"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Length>
+		<Length Name="ac_lower_oversize">
+			<Description><![CDATA["AC ala-asennusvara"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Length>
+		<String Name="ifc_optypestr">
+			<Description><![CDATA["IFC-operaatio"]]></Description>
+			<Fix/>
+			<Value><![CDATA["Ei määritelty"]]></Value>
+		</String>
+		<Integer Name="ifc_optype">
+			<Description><![CDATA["IFC-operaatio"]]></Description>
+			<Fix/>
+			<Value>0</Value>
+		</Integer>
+	</Parameters>
+</ParamSection>
+
+<Copyright SectVersion="1" SectionFlags="0" SubIdent="0">
+	<Author></Author>
+	<License>
+		<Type>Commercial</Type>
+		<Version></Version>
+	</License>
+</Copyright>
+
+<Keywords SectVersion="1" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Keywords>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Comment SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Comment>
+
+<Picture MIME="image/png" SectVersion="19" SectionFlags="0" SubIdent="0" length_in_bytes="724" platform="Win">
+	<![CDATA[
+	696D6167652F706E670089504E470D0A1A0A0000000D494844520000001E0000
+	0011080200000045048B20000000017352474200AECE1CE90000006C65584966
+	4D4D002A000000080004011A0005000000010000003E011B0005000000010000
+	004601280003000000010002000087690004000000010000004E000000000000
+	00480000000100000048000000010002A0020004000000010000001EA0030004
+	0000000100000011000000003B22742B000000097048597300000B1300000B13
+	01009A9C18000001F7494441543811B55339AF7151147D864228C590D0124324
+	44AD92181A940A895E5069FC039D9068A8D4228644215110850885C6100A6362
+	682444444C6F7D39EF9DEFB9E155CF2DCE5D7B9F75D6DD67EF7559F7FBFDE33D
+	0FFB3DB2FF54DF28CD25550F87C3D56A2510088C4623C9A0519BCD46229190F0
+	E9BA582CB6DBAD52A96C369B2068B55AA15048995F55E772B952A9349D4EC946
+	329974B95C5EAF176B2A95A26C06A8D7EBD96CF67C3E8F46231CE976BB0F0454
+	87271289148B4582F3F9BCD3E9ECF7FB087BBD9EC3E1A05B84F0740D87C3B55A
+	EDE7D6935E170A05BFDFAF52A950825AADF6F97C90060E8542AD568BD4150C06
+	3B9D4EB95C4E24120F95FE0898D2A7D369369BE9F57ACA011E8FC7B8B5C160A8
+	542AC84F2693F97CAED3E98EC7E37EBFA74C06604A5FAFD7DBEDC6E57E8D176C
+	605C13798BC5D268342E974BB55A359BCD1C0E87A1C50899D27C3E5F2693A1D1
+	94072C97CB793C9E48248219DAED36A4AD562B25BC024C69F0702C168BC158C0
+	684E3C1EB7DBEDE4BCCD664BA7D36C365BA150BC52A4F9FF17A7298FC7B3DBED
+	303D168B852474DD6E37D935994CD16814A6A464C2A1E103207681F9604C8C8B
+	BA071D5F2E975869E615C0840783412010786E3E8D46B35EAF6126FA59942395
+	4A7F2BEA9B7A381C32998C582C66FCBA2CD4F2CDF9E3F79331FED517DE28FD09
+	CAB74A5D3DA7712F0000000049454E44AE426082
+	]]>
+</Picture>
+
+</Symbol>
