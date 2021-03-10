@@ -1,0 +1,1413 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Symbol IsArchivable="false" IsPlaceable="true" MainGUID="8E80327F-20C0-3D4C-9925-3DC7787060A5" MigrationValue="Normal" Owner="1196638531" Signature="1196644685" Version="40">
+<Ancestry SectVersion="1" SectionFlags="0" SubIdent="0" Template="false">
+	<MainGUID>F938E33A-329D-4A36-BE3E-85E126820996</MainGUID>
+	<MainGUID>103E8D2C-8230-42E1-9597-46F84CCE28C0</MainGUID>
+	<MainGUID>784EAEA1-5041-4AA6-B6F4-EF263A891EE7</MainGUID>
+	<MainGUID>21DE7666-EF71-4885-8222-629F88CB3F4A</MainGUID>
+	<MainGUID>66F6D7C2-637D-4243-91FD-6DB3FC8F91BE</MainGUID>
+	<MainGUID>8924BF73-5771-4731-9E84-F87F7C4BCEAB</MainGUID>
+</Ancestry>
+
+<CalledMacros SectVersion="2" SectionFlags="0" SubIdent="0">
+	<Macro>
+		<MName><![CDATA["Esitystapojen asetus"]]></MName>
+		<MainGUID>EFA2EC80-F677-DA45-B473-E67193D5E439</MainGUID>
+	</Macro>
+	<Macro>
+		<MName><![CDATA["Esitystapojen käyttöliittymä"]]></MName>
+		<MainGUID>2BB5F41A-81DC-014F-AE43-926904A638E6</MainGUID>
+	</Macro>
+</CalledMacros>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_3D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+muly -1+2*ac_refside
+ 
+pen gs_view_pen
+
+building_material aine
+if pinta<>0 then material pinta
+
+cylind ac_wall_height +0.01,.01
+addx ac_wall_length
+cylind ac_wall_height +0.02,.005
+del 1
+
+if GLOB_FEEDBACK_MODE then _iDetlevel3D = DETLEVEL_3D_SIMPLE
+
+!-------------------------------------- cuts
+
+!if not(GLOB_FEEDBACK_MODE) then
+	if not(_iDetlevel3D = DETLEVEL_3D_DRAFT ) then
+		! --- start bevel
+		addx -start_extra
+		roty 90
+		if abs(start_extra) > EPS then
+			rotx 180
+		else
+			rotx 90+ac_angles[1][1]
+		endif
+			cutplane 
+		del 3
+		
+		! --- end bevel
+		addx ac_wall_length+end_extra
+		roty 90
+		if abs(end_extra) > EPS then
+			rotx 0
+		else
+			rotx -90+ac_angles[1][2]
+		endif
+			cutplane 
+		del 3
+	endif ! not(_iDetlevel3D = DETLEVEL_3D_DRAFT ) 
+
+	! ------ windows / holes
+	if vardim2(ac_wd_poly) >5 then
+	rotx 90
+		for aukko=1 to vardim1(ac_wd_poly)
+			for n=2 to vardim2(ac_wd_poly) step 2
+				if corner_window_fix then
+					! if a window starts before, assume it's a corner window
+					if 		abs(ac_angles[1][1]-90)>EPS and \
+							ac_wd_poly[aukko][n]-EPS <= ac_wall_thk1/cos(90-ac_angles[1][1]) then 
+						ac_wd_poly[aukko][n] = ac_wd_poly[aukko][n] - 2
+					endif
+					! if a window ends at the wall end, assume it's a corner window
+					if 		abs(ac_angles[1][2]-90)>EPS and \
+							ac_wall_length -ac_wd_poly[aukko][n]-EPS <= ac_wall_thk2/cos(90-ac_angles[1][2]) then 
+						ac_wd_poly[aukko][n] = ac_wd_poly[aukko][n] + 2
+					endif
+				endif
+
+				put ac_wd_poly[aukko][n], ac_wd_poly[aukko][n+1]
+			next n
+			cutpoly nsp/2 ,  get(nsp)
+		next aukko
+	del 1
+	endif
+	
+	! ------ top
+
+	put -2, ac_wall_height + top_extra +1
+
+	slope_at_start =	(ac_top_poly[2][2]-ac_top_poly[1][2]) / \
+						(ac_top_poly[2][1]-ac_top_poly[1][1])
+	put -1, ac_top_poly[1][2] -slope_at_start  + top_extra
+	for piste=1 to vardim1(ac_top_poly)
+		put ac_top_poly[piste][1], ac_top_poly[piste][2] + top_extra
+	next piste
+	piste = vardim1(ac_top_poly)
+	slope_at_end =	(ac_top_poly[piste][2]-ac_top_poly[piste-1][2]) / \
+							(ac_top_poly[piste][1]-ac_top_poly[piste-1][1])
+	put ac_wall_length+1, ac_top_poly[piste][2] + slope_at_end +top_extra
+	put ac_wall_length+2, ac_wall_height + top_extra
+	put ac_wall_length+2, ac_wall_height + top_extra +1
+
+	put -2, ac_wall_height + top_extra +1
+	
+	rotx 90
+	cutpoly nsp/2 ,  get(nsp)
+	
+	del 1
+	
+	! ------ bottom
+
+	put -start_extra-1, -bottom_extra-1
+	put -start_extra-1, ac_bot_poly[1][2] - bottom_extra
+
+	for piste=1 to vardim1(ac_bot_poly)
+		put ac_bot_poly[piste][1], ac_bot_poly[piste][2] - bottom_extra
+	next piste
+	piste = vardim1(ac_bot_poly)
+	put ac_wall_length+end_extra +1, ac_bot_poly[piste][2] -bottom_extra
+	put ac_wall_length+end_extra +1, -bottom_extra -1
+	rotx 90
+	cutpoly nsp/2 ,  get(nsp)
+	del 1
+	
+!endif ! not(GLOB_FEEDBACK_MODE)
+
+
+! --------------------------------- panel geometry 
+
+
+building_material aine
+material pinta
+
+if _iDetlevel3D = DETLEVEL_3D_DETAILED and \
+	 profiili <> "Oma profiili" then 
+	gosub 	profiili ! get profiili
+endif
+
+building_material aine
+if pinta <> 0 then material pinta
+
+
+add 0, -paksuus, ac_wall_height/2
+HOTSPOT  0				,0,0	, unId, start_extra, 1:unId=unId+1	! base
+HOTSPOT  1				,0,0	, unId, start_extra, 3:unId=unId+1	! ref
+HOTSPOT  -start_extra	,0,0	, unId, start_extra, 2:unId=unId+1	! moving
+del 1
+add ac_wall_length, -paksuus, ac_wall_height/2
+HOTSPOT  0				,0,0	, unId, end_extra, 1:unId=unId+1	! base
+HOTSPOT  -1				,0,0	, unId, end_extra, 3:unId=unId+1	! ref
+HOTSPOT  end_extra		,0,0	, unId, end_extra, 2:unId=unId+1	! moving
+del 1
+
+add ac_wall_length/2, -paksuus,ac_wall_height
+HOTSPOT  0,0, 0			, unId, top_extra, 1:unId=unId+1	! base
+HOTSPOT  0,0,-1			, unId, top_extra, 3:unId=unId+1	! ref
+HOTSPOT  0,0,top_extra	, unId, top_extra, 2:unId=unId+1	! moving
+del 1
+add ac_wall_length/2, -paksuus,0
+HOTSPOT  0,0, 0				, unId, bottom_extra, 1:unId=unId+1	! base
+HOTSPOT  0,0,1				, unId, bottom_extra, 3:unId=unId+1	! ref
+HOTSPOT  0,0,-bottom_extra	, unId, bottom_extra, 2:unId=unId+1	! moving
+del 1
+
+
+if tyyppi=T_PYSTY then ! -------------- tyyppi
+
+	add -start_extra + leveys, -paksuus, ac_wall_height/2
+	HOTSPOT  -0		,0,0	, unId, offset, 1:unId=unId+1	! base
+	HOTSPOT  -1		,0,0	, unId, offset, 3:unId=unId+1	! ref
+	HOTSPOT  offset	,0,0	, unId, offset, 2:unId=unId+1	! moving
+	del 1
+
+	muly -1
+	_pituus= bottom_extra+ac_wall_height+top_extra
+
+	if _iDetlevel3D = DETLEVEL_3D_DRAFT then
+		add -start_extra-start_bevel_overshoot ,-EPS,-bottom_extra
+		block 	start_bevel_overshoot +start_extra+ ac_wall_length + end_extra + end_bevel_overshoot, 
+				paksuus-EPS,
+				_pituus
+		COOR{3} 2, 4,0,0,0,0,0,1,0,1,0,	1,0,0
+		del 1
+	else
+		for     l= -(leveys+rako)*(offset>EPS)+offset - start_extra - start_bevel_overshoot \
+				to   ac_wall_length + rako 			+ end_extra + end_bevel_overshoot \
+				step leveys+ rako
+			if _iDetlevel3D = DETLEVEL_3D_DETAILED then
+				add l,0,-bottom_extra
+				rotz profiilin_kulma
+				if profiili = "Oma profiili" then 
+					gosub "prism omasta profiilista"
+				else
+					prism_ NSP/3, _pituus, use(NSP)
+				endif	
+				del 2
+			endif
+			if _iDetlevel3D = DETLEVEL_3D_SIMPLE then
+				add l,-EPS,-bottom_extra
+				block leveys+min(0,rako), paksuus-EPS, _pituus
+				del 1
+			endif
+			COOR{3} 2, 4,0,0,0,0,0,1,0,1,0,1,0,0
+		next l
+	endif
+	del 1
+endif
+if tyyppi=T_VAAKA then ! --------------
+
+	add ac_wall_length/2, -paksuus,-bottom_extra + leveys
+	HOTSPOT  0,0,-0			, unId, offset, 1:unId=unId+1	! base
+	HOTSPOT  0,0,-1			, unId, offset, 3:unId=unId+1	! ref
+	HOTSPOT  0,0,offset		, unId, offset, 2:unId=unId+1	! moving
+	del 1
+
+	_pituus = start_bevel_overshoot + start_extra +  ac_wall_length + end_extra + end_bevel_overshoot
+
+	if _iDetlevel3D = DETLEVEL_3D_DRAFT then
+		add -start_bevel_overshoot-start_extra , -paksuus-EPS, -bottom_extra
+		block 	_pituus, 
+				paksuus-EPS,
+				ac_wall_height+bottom_extra+top_extra
+		del 1
+	else
+
+		rotx 180
+		roty 90
+		addz -start_bevel_overshoot-start_extra
+		for     l=  -(leveys+rako)*(offset>EPS)+offset - bottom_extra\
+				to   ac_wall_height+ rako + top_extra\
+				step leveys+ rako
+			if _iDetlevel3D = DETLEVEL_3D_DETAILED then
+				add l, 0, 0
+
+				rotz profiilin_kulma
+				if profiili = "Oma profiili" then 
+					gosub "prism omasta profiilista"
+				else
+					prism_ NSP/3, _pituus, use(NSP)
+				endif	
+				del 2
+			endif
+			if _iDetlevel3D = DETLEVEL_3D_SIMPLE then
+				add l,-EPS,0
+				block leveys+min(0,rako), paksuus-EPS, _pituus
+				del 1
+			endif
+				COOR{3} 2, 4,0,0,0,0,0,1,0,1,0,1,0,0
+		next l
+		del 3
+	endif
+
+endif
+
+
+
+!-------------------------------------- cutends
+
+!if not(GLOB_FEEDBACK_MODE) then
+	cutend ! top
+	cutend ! bot
+	if not(_iDetlevel3D = DETLEVEL_3D_DRAFT ) then
+		cutend:cutend ! reunaviisteet 
+	endif	
+	if vardim2(ac_wd_poly) >5 then
+	for aukko=1 to vardim1(ac_wd_poly)
+		cutend ! poly
+	next aukko
+	endif
+!endif ! not(GLOB_FEEDBACK_MODE)
+
+ 
+
+
+end ! --------------------------
+
+! --------------------------   profiilit
+
+"UYV":
+!1.______________-
+!V|_             \__  
+! . |_______________|
+put		0						, paksuus			,15,
+		0						, paksuus/2+EPS	,15,
+		-rako+EPS	, paksuus/2+EPS	,15,
+		-rako +EPS	, EPS				,15,
+		leveys					, EPS				,15,
+		leveys					, paksuus/2		,15,
+		leveys+rako, paksuus/2		,15,
+		-(paksuus/2)/tan(28), paksuus/2, 100+15
+return
+
+"UTV":
+!1._________
+!V/         \  } groovedepth
+! |_         |_
+!  _|         _|
+! |__________|
+	groovedepth=paksuus/6
+	put		0			,paksuus-groovedepth		,15,
+			0			,paksuus*2/3		,15,
+			-rako		,paksuus*2/3		,15,
+			-rako		,paksuus*1/3		,15,
+			0			,paksuus*1/3		,15,
+			0			, EPS				,15,
+			leveys+rako-EPS, EPS				,15,
+			leveys+rako-EPS, paksuus*1/3+EPS		,15,
+			leveys-EPS					, paksuus*1/3+EPS		,15,
+			leveys-EPS					, paksuus*2/3-EPS		,15,
+			leveys+rako-EPS, paksuus*2/3-EPS		,15,
+			leveys+rako-EPS, paksuus-groovedepth	,15+64,
+			leveys+rako-2*groovedepth, paksuus-groovedepth	, 1000+15,
+			-groovedepth,groovedepth		,100+15,
+			groovedepth, paksuus			,15
+return
+
+"Suorakaide":
+put		0			,0			,15,
+		0			,paksuus	,15,
+		leveys		,paksuus	,15,
+		leveys		, 0			,15
+return
+
+
+"prism omasta profiilista":
+	_profiili = oma_profiili
+	_flipx = peilaa_profiili
+	_flipy = 0
+	komponenttienMaara = 1
+	gosub "profiilitiedot"
+	profiiliosanRakennusaine = 1
+	profiiliosanPinta = 1
+	profiiliosanKyna = 1
+	for profiilinKomponentti = 1 to komponenttienMaara ! =1 jos ei omaa profiilia käytössä
+		gosub "profiilista tubeputit"
+		building_material profiiliosanRakennusaine
+		material profiiliosanPinta
+		prism_ profiilinPisteita, _pituus, get(NSP)
+	next profiilinKomponentti
+return
+
+"profiilitiedot":
+!in: _profiili
+!out: komponenttienMaara
+
+	dim komponentinTyyppi[] !- rakenne, pinta, muu. ei käytetä
+	
+	komponenttienMaara=0
+	n = REQUEST ("profile_components", _profiili, komponenttienMaara, komponentinTyyppi)
+	!n2 = REQUEST ("profile_default_boundingbox",  _profiili, bb_xmin, bb_ymin, bb_xmax, bb_ymax)
+	
+	if n then
+		dim _bShowPart[]
+	
+		dim profiilinRaakadata[]
+	
+		n = REQUEST ("profile_default_geometry", _profiili, profiilinRaakadata)		! n1, n2, ..., nn, x11, y11,s11 
+		! raakadatassa ensin pisteiden määrät per komponentti, sitten 5 dataa per piste
+	
+		dim ensimmaisetPisteet[]
+		dim viimeisetPisteet[]
+		ensimmaisetPisteet[1] = komponenttienMaara + 1
+		for _i = 2 to komponenttienMaara
+			ensimmaisetPisteet[_i] = ensimmaisetPisteet[_i - 1] + profiilinRaakadata[_i - 1] * 5
+			viimeisetPisteet[_i-1] = ensimmaisetPisteet[_i] - 1
+		next _i
+		viimeisetPisteet[komponenttienMaara] = vardim1(profiilinRaakadata)	
+	else
+		print "Profiilin komponentteja löydy"
+	endif
+return 
+
+"profiilista tubeputit":
+! in: _profiili, komponenttienMaara, _flip
+! out: profiiliosanRakennusaine,profiiliosanPinta,profiiliosanKyna, tubeputit pinossa
+
+		dim profiiliosanPinnat[]
+		n = REQUEST{3} ("profile_component_info", _profiili, profiilinKomponentti, "gs_profile_comp_surfaces", profiiliosanPinnat)
+	
+		profiiliosanRakennusaine = 1
+		profiiliosanPinta = 1
+		profiiliosanKyna = 1
+		n = REQUEST{3} ("profile_component_info", _profiili, profiilinKomponentti, "gs_profile_bmat", profiiliosanRakennusaine)
+		n = REQUEST{3} ("profile_component_info", _profiili, profiilinKomponentti, "gs_profile_surface", profiiliosanPinta)
+		n = REQUEST{3} ("profile_component_info", _profiili, profiilinKomponentti, "gs_profile_outlinepen", profiiliosanKyna)
+	
+		building_material profiiliosanRakennusaine
+		pen profiiliosanKyna
+	
+		tubemaski = 1+2+16+32 +128+256
+	
+		profiilinPisteita = (viimeisetPisteet[profiilinKomponentti] - ensimmaisetPisteet[profiilinKomponentti] + 1) / 5
+			
+		_surfIdx = 1
+		for _i = ensimmaisetPisteet[profiilinKomponentti] to viimeisetPisteet[profiilinKomponentti] step 5
+			edgeVisible			= profiilinRaakadata[_i+2]
+			verticalEdgeVisible	= profiilinRaakadata[_i+3]
+			additionalStatus	= profiilinRaakadata[_i+4]
+			poly2Status = edgeVisible + additionalStatus
+			tubeStatus  = additionalStatus
+			prismStatus = additionalStatus
+			if additionalStatus >= 0 then         ! not contour end
+				 if edgeVisible then
+					  prismStatus = prismStatus + 15    ! j1, j2, j3, j4
+				 endif
+				 if verticalEdgeVisible = 0 then
+					  prismStatus = prismStatus+ 64     ! j7
+					  ! in tube, lateral edges starting from the node are used for showing the contour
+					  tubeStatus = tubeStatus + 1
+				 endif
+			endif
+
+	
+			put profiilinRaakadata[_i]		*(1-2*_flipx), 
+				profiilinRaakadata[_i + 1]	*(1-2*_flipy), 
+				prismStatus
+	
+!			put profiilinRaakadata[_i]*(1-2*_flipx), 
+!				profiilinRaakadata[_i + 1]*(1-2*_flipy), 
+!				tubeStatus!,
+!				profiiliosanPinnat[_surfIdx]
+	
+	
+			_surfIdx = _surfIdx + 1
+		next _i
+	
+return
+
+
+
+
+
+]]>
+</Script_3D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_2D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+
+add2 0, -Tykkelse
+HOTSPOT2  0				,0	, unId, start_extra, 1:unId=unId+1	! base
+HOTSPOT2  1				,0	, unId, start_extra, 3:unId=unId+1	! ref
+HOTSPOT2  -start_extra	,0	, unId, start_extra, 2:unId=unId+1	! moving
+del 1
+add2 ac_wall_length, -Tykkelse
+HOTSPOT2  0				,0	, unId, end_extra, 1:unId=unId+1	! base
+HOTSPOT2  -1			,0	, unId, end_extra, 3:unId=unId+1	! ref
+HOTSPOT2  end_extra		,0	, unId, end_extra, 2:unId=unId+1	! moving
+del 1
+
+if (iDetlevel2D = DETLEVEL_2D_SCSENS) then	! Scale Sensitive
+	_iDetlevel2D = DETLEVEL_2D_DETAILED
+	if (GLOB_SCALE > 150) 						then _iDetlevel2D = DETLEVEL_2D_DRAFT
+	if (GLOB_SCALE > 75) & (GLOB_SCALE <= 150)	then _iDetlevel2D = DETLEVEL_2D_SIMPLE
+	if (GLOB_SCALE <= 75) 						then _iDetlevel2D = DETLEVEL_2D_DETAILED
+endif
+
+line_type gs_line_type
+
+start_inner = -start_extra
+end_inner = ac_wall_length + end_extra
+start_outer = start_inner +not(start_extra>EPS)* Tykkelse/tan(ac_angles[1][1])
+end_outer = end_inner +not(end_extra>EPS)* Tykkelse/tan(ac_angles[1][2])
+
+if _iDetlevel2D = DETLEVEL_2D_DRAFT then
+	line2 	start_outer,-Tykkelse,
+			end_outer,-Tykkelse
+
+endif
+
+if _iDetlevel2D = DETLEVEL_2D_SIMPLE then
+	mul2 1,-1+2*ac_refside
+	if gs_fill then
+		pen gs_fill_pen
+		fill gs_fill_type
+		poly2 4,2+4,
+			start_inner	,0,
+			end_inner	,0,
+			end_outer	,-Tykkelse,
+			start_outer	,-Tykkelse
+	endif
+	pen gs_cont_pen
+	poly2 4,1+4,
+			start_inner	,0,
+			end_inner	,0,
+			end_outer	,-Tykkelse,
+			start_outer	,-Tykkelse
+	del 1
+endif
+
+if _iDetlevel2D = DETLEVEL_2D_DETAILED then
+	if gs_fill then
+		pen gs_fill_pen
+		fill gs_fill_type
+		project2{3} 3,270,3+32,4   ,gs_back_pen,0,0,0
+	endif
+	pen gs_cont_pen
+	project2{2} 3,270,2 + 32
+endif
+
+
+"end":
+
+
+]]>
+</Script_2D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_1D SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+EPS = 0.0001
+unID=54334
+
+
+T_VAAKA = 0
+T_PYSTY = 1
+T_PANEELI = 2
+
+
+
+start_bevel_overshoot = (ac_angles[1][1]>90) * tan(ac_angles[1][1]-90)* paksuus
+end_bevel_overshoot   = (ac_angles[1][2]<90) * tan(90-ac_angles[1][2])* paksuus
+
+total_estimate=0
+if tyyppi = T_PYSTY then
+	total_estimate=  (top_extra+ac_wall_height + bottom_extra) * \
+					ceil((start_bevel_overshoot +start_extra + ac_wall_length + end_extra + end_bevel_overshoot)/leveys)
+endif
+if tyyppi = T_VAAKA then
+	total_estimate=  (start_bevel_overshoot +start_extra + ac_wall_length + end_extra + end_bevel_overshoot) * \
+					ceil((top_extra+ac_wall_height + bottom_extra)/leveys)
+endif
+
+
+
+
+
+! -------------------------- Esitystavat
+
+DETLEVEL_2D_MVO			= 1
+DETLEVEL_2D_SCSENS		= 2
+DETLEVEL_2D_DETAILED	= 3
+DETLEVEL_2D_SIMPLE		= 4
+DETLEVEL_2D_DRAFT		= 5
+DETLEVEL_2D_SYMBOLIC	= 6
+DETLEVEL_3D_MVO			= 1
+DETLEVEL_3D_SCSENS		= 2	! Unused
+DETLEVEL_3D_DETAILED	= 3
+DETLEVEL_3D_SIMPLE		= 4
+DETLEVEL_3D_DRAFT		= 5
+DETLEVEL_3D_OFF			= 6
+
+dim stDetlevel2D[]
+	stDetlevel2D[1]	= `Esitystavan mukaan`
+	stDetlevel2D[2]	= `Mittakaavassa`
+	stDetlevel2D[3]	= `Täysi`
+	stDetlevel2D[4]	= `Keskitaso`
+	stDetlevel2D[5]	= `Matala`
+	stDetlevel2D[6]	= `Symboli`
+dim stDetlevel3D[]
+	stDetlevel3D[1]	= `Esitystavan mukaan`
+	!	stDetlevel3D[2]	= `Mittakaavassa`
+	stDetlevel3D[3]	= `Täysi`
+	stDetlevel3D[4]	= `Yksinkertaistettu`
+	stDetlevel3D[5]	= `Kaaviomainen`
+	stDetlevel3D[6]	= `Pois`
+
+
+_iDetlevel2D= iDetlevel2D
+_iDetlevel3D= iDetlevel2D
+call "Esitystapojen asetus" parameters all returned_parameters \
+	_iDetlevel2D,	_iDetlevel3D,
+	gs_cont_pen,	gs_line_type,
+	gs_fill,	gs_fill_type,	gs_fill_pen,	gs_back_pen,	gs_view_pen, res, rautalanka, varjot
+	
+	
+
+
+
+]]>
+</Script_1D>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_PR SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_PR>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_UI SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+
+UI_DIALOG "Seinäpanelointitarvikkeen asetukset"
+
+sivu = 0
+rivivali = 22
+ensimmainen_rivi = 20
+tab = 444/4-10
+inlev = tab-10
+inkor = rivivali-3
+outlev = inlev
+outkor = inkor
+nudge = 3
+ 
+sivu = sivu+1
+UI_PAGE sivu, -1, "Asetukset", "" ! ----------------------------- Asetukset
+    x = 10
+    y = ensimmainen_rivi
+
+    UI_OUTFIELD "profiili:",     x, y
+        UI_INFIELD "profiili", x+tab,y-nudge, inlev*2,inkor
+                y=y+rivivali
+    UI_OUTFIELD "oma_profiili:",     x, y
+        UI_INFIELD "oma_profiili", x+tab,y-nudge, inlev*2,inkor
+                y=y+rivivali
+
+	UI_OUTFIELD "Rakennusaine:"	,x		,y
+	UI_INFIELD "aine"		,x+tab	,y-nudge, inlev*2	,inkor
+	y=y+rivivali
+
+	UI_OUTFIELD "Pinta (0:oletus):"	,x		,y	
+	UI_INFIELD "pinta"		,x+tab	,y-nudge, inlev*2	,inkor
+	y=y+rivivali
+
+UI_OUTFIELD "Extra dimensions:", x,y
+UI_INFIELD "top_extra", x+ 2*tab, y-nudge, tab, linespace-2
+y=y+ rivivali
+UI_INFIELD "start_extra", x+ tab, y-nudge, tab, linespace-2
+UI_INFIELD "end_extra"	, x+ 3*tab, y-nudge, tab, linespace-2
+y=y+ rivivali
+UI_INFIELD "bottom_extra", x+ 2*tab, y-nudge, tab, linespace-2
+y=y+ rivivali
+
+
+sivu = sivu+1
+call "Esitystapojen käyttöliittymä" parameters all sivu=sivu, nayta_taytteet = 1, esitystavan_mukainen=esitystavan_mukainen ! ----------------------------- Esitystavat
+
+
+
+
+
+!!!foo = REQUEST ("Model_length_unit", "", format_string)
+!!foo = REQUEST ("Linear_dimension", "", format_string)
+!!!foo = REQUEST ("Working_length_unit", "", format_string)
+!!
+!!UI_OUTFIELD "Height:" , x, y	:	UI_OUTFIELD str(format_string,thickness), x+tab, y
+!!y=y+linespace
+!!
+!!UI_OUTFIELD "Width:" , x, y		:	UI_OUTFIELD str(format_string, width), x+tab, y
+!!y=y+linespace
+!!
+
+
+
+
+
+]]>
+</Script_UI>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_VL SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[
+
+
+
+values{2} "tyyppi" T_VAAKA,"Vaaka", T_PYSTY,"Pysty", T_PANEELI,"Paneeli"
+
+values "profiili" "Suorakaide", "Oma profiili"
+
+if profiili = "Suorakaide" then 
+	lock "oma_profiili", "peilaa_profiili"
+endif
+if profiili = "Oma profiili" then 
+	lock "paksuus", "aine", "pinta"
+endif
+
+! -------------------------- Esitystavat
+
+call "Esitystapojen asetus" parameters all
+
+if esitystavan_mukainen then
+	LOCK "gs_back_pen"                                                                                                        
+	LOCK "gs_cont_pen"                                                                                                        
+	LOCK "gs_fill"                                                                                                            
+	LOCK "gs_fill_pen"                                                                                                        
+	LOCK "gs_fill_type"                                                                                                       
+	LOCK "gs_line_type"      
+	LOCK "gs_view_pen"      
+endif
+
+values "gs_cont_pen" range[1,255]
+values "gs_fill_pen" range[1,255]
+values "gs_view_pen" range[1,255]
+]]>
+</Script_VL>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_FWM SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_FWM>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Script_BWM SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Script_BWM>
+
+<ParamSection SectVersion="27" SectionFlags="0" SubIdent="0">
+	<ParamSectHeader>
+		<AutoHotspots>false</AutoHotspots>
+		<StatBits>
+			<STBit_UIDefault/>
+			<STBit_FixSize/>
+			<STBit_UIUseHierarchicalPages/>
+		</StatBits>
+		<WDLeftFrame>0</WDLeftFrame>
+		<WDRightFrame>0</WDRightFrame>
+		<WDTopFrame>0</WDTopFrame>
+		<WDBotFrame>0</WDBotFrame>
+		<LayFlags>65535</LayFlags>
+		<WDMirrorThickness>0</WDMirrorThickness>
+		<WDWallInset>0</WDWallInset>
+	</ParamSectHeader>
+	<Parameters>
+		<Length Name="A">
+			<Description><![CDATA["Mitta 1"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>1</Value>
+		</Length>
+		<Length Name="B">
+			<Description><![CDATA["Mitta 2"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>1</Value>
+		</Length>
+		<Length Name="ZZYZX">
+			<Description><![CDATA["Korkeus"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>1</Value>
+		</Length>
+		<BuildingMaterial Name="aine">
+			<Description><![CDATA[""]]></Description>
+			<Value>49</Value>
+		</BuildingMaterial>
+		<Material Name="pinta">
+			<Description><![CDATA[""]]></Description>
+			<Value>0</Value>
+		</Material>
+		<Length Name="offset">
+			<Description><![CDATA["siirto"]]></Description>
+			<Value>-0.0162</Value>
+		</Length>
+
+		<!-- bbbbb: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Title Name="bbbbb">
+			<Description><![CDATA["Properties"]]></Description>
+		</Title>
+		<String Name="profiili">
+			<Description><![CDATA["Profiili"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA["Suorakaide"]]></Value>
+		</String>
+		<Integer Name="tyyppi">
+			<Description><![CDATA["Tyyppi"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>1</Value>
+		</Integer>
+		<Profile Name="oma_profiili">
+			<Description><![CDATA["Oma profiili"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>31</Value>
+		</Profile>
+		<Boolean Name="peilaa_profiili">
+			<Description><![CDATA["Peilaa profiili"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Boolean>
+		<Angle Name="profiilin_kulma">
+			<Description><![CDATA["Profiilin kulma"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Angle>
+		<Length Name="leveys">
+			<Description><![CDATA["Leveys"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0.1</Value>
+		</Length>
+		<Length Name="paksuus">
+			<Description><![CDATA["Paksuus"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0.02</Value>
+		</Length>
+		<Length Name="rako">
+			<Description><![CDATA["Rako"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0.005</Value>
+		</Length>
+
+		<!-- aaaaa: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Title Name="aaaaa">
+			<Description><![CDATA["Levennykset"]]></Description>
+		</Title>
+		<Length Name="start_extra">
+			<Description><![CDATA["Alkupää"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Length>
+		<Length Name="end_extra">
+			<Description><![CDATA["Loppupää"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Length>
+		<Length Name="top_extra">
+			<Description><![CDATA["Ylhäällä"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Length>
+		<Length Name="bottom_extra">
+			<Description><![CDATA["Alhaalla"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Length>
+		<Boolean Name="AC_show2DHotspotsIn3D">
+			<Description><![CDATA["Näytä 2d hodarit 3dssä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>1</Value>
+		</Boolean>
+		<Length Name="ac_bottomlevel">
+			<Description><![CDATA["ylä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>1</Value>
+		</Length>
+		<Length Name="ac_toplevel">
+			<Description><![CDATA["ala"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>0</Value>
+		</Length>
+		<String Name="gs_detlevel_2D">
+			<Description><![CDATA["2D-esitystarkkuus"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value><![CDATA["Tarkka"]]></Value>
+		</String>
+		<String Name="gs_detlevel_3D">
+			<Description><![CDATA["3D-esitystarkkuus"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value><![CDATA["Tarkka"]]></Value>
+		</String>
+
+		<!-- gs_2D_representation: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Title Name="gs_2D_representation">
+			<Description><![CDATA["Esitystavat"]]></Description>
+			<Fix/>
+		</Title>
+		<Boolean Name="esitystavan_mukainen">
+			<Description><![CDATA["Esitystavan mukainen"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Boolean>
+		<Integer Name="iDetlevel2D">
+			<Description><![CDATA["2D detail level"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>3</Value>
+		</Integer>
+		<PenColor Name="gs_cont_pen">
+			<Description><![CDATA["Ääriviivakynä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>2</Value>
+		</PenColor>
+		<PenColor Name="gs_fill_pen">
+			<Description><![CDATA["Täytekynä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>19</Value>
+		</PenColor>
+		<PenColor Name="gs_back_pen">
+			<Description><![CDATA["Täytteen taustakynä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>19</Value>
+		</PenColor>
+		<FillPattern Name="gs_fill_type">
+			<Description><![CDATA["Täytetyyppi"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>65</Value>
+		</FillPattern>
+		<Integer Name="iDetlevel3D">
+			<Description><![CDATA["3D detail level"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>3</Value>
+		</Integer>
+		<PenColor Name="gs_view_pen">
+			<Description><![CDATA["3D kynä"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>1</Value>
+		</PenColor>
+
+		<!-- gs_wall_addon: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Title Name="gs_wall_addon">
+			<Description><![CDATA["Tarvikelaajennuksen parametrit"]]></Description>
+			<Fix/>
+		</Title>
+		<Boolean Name="ac_accessory_debug">
+			<Description><![CDATA["Tarvikkeen virheenpoistotoiminto"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Boolean>
+		<Length Name="ac_wall_height">
+			<Description><![CDATA["Seinän korkeus"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>2</Value>
+		</Length>
+		<Length Name="ac_wall_radius">
+			<Description><![CDATA["Seinän säde"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Length>
+		<Length Name="ac_wall_length">
+			<Description><![CDATA["Seinän pituus"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>1</Value>
+		</Length>
+		<Length Name="ac_wall_thk1">
+			<Description><![CDATA["Seinän paksuus - alku"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0.2</Value>
+		</Length>
+		<Length Name="ac_wall_thk2">
+			<Description><![CDATA["Seinän paksuus - loppu"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0.2</Value>
+		</Length>
+		<Integer Name="ac_wall_resol">
+			<Description><![CDATA["Seinän resoluutio"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Integer>
+		<Boolean Name="ac_refside">
+			<Description><![CDATA["Rakennetaan oikealle puolelle"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Boolean>
+		<Angle Name="ac_angles">
+			<Description><![CDATA["Aukon kulmat"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<ArrayValues FirstDimension="1" SecondDimension="2">
+				<AVal Column="1" Row="1">90</AVal>
+				<AVal Column="2" Row="1">45</AVal>
+			</ArrayValues>
+		</Angle>
+		<Length Name="ac_side_poly">
+			<Description><![CDATA["Sivumonikulmio"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<ArrayValues FirstDimension="1" SecondDimension="2">
+				<AVal Column="1" Row="1">0</AVal>
+				<AVal Column="2" Row="1">0</AVal>
+			</ArrayValues>
+		</Length>
+		<Length Name="ac_top_poly">
+			<Description><![CDATA["Seinän ylämonikulmio"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<ArrayValues FirstDimension="2" SecondDimension="2">
+				<AVal Column="1" Row="1">0</AVal>
+				<AVal Column="2" Row="1">2</AVal>
+				<AVal Column="1" Row="2">1</AVal>
+				<AVal Column="2" Row="2">2</AVal>
+			</ArrayValues>
+		</Length>
+		<Length Name="ac_bot_poly">
+			<Description><![CDATA["Seinän alamonikulmio"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<ArrayValues FirstDimension="2" SecondDimension="2">
+				<AVal Column="1" Row="1">0</AVal>
+				<AVal Column="2" Row="1">0</AVal>
+				<AVal Column="1" Row="2">1</AVal>
+				<AVal Column="2" Row="2">0</AVal>
+			</ArrayValues>
+		</Length>
+		<Length Name="ac_wd_poly">
+			<Description><![CDATA["Ikkunan/oven monikulmio"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<ArrayValues FirstDimension="1" SecondDimension="2">
+				<AVal Column="1" Row="1">0</AVal>
+				<AVal Column="2" Row="1">0</AVal>
+			</ArrayValues>
+		</Length>
+		<Boolean Name="ac_curved_wall">
+			<Description><![CDATA["Kaareva seinä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Boolean>
+		<Material Name="ac_left_mat">
+			<Description><![CDATA["Vasemman sivun pinta"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Material>
+		<Material Name="ac_right_mat">
+			<Description><![CDATA["Oikean sivun pinta"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Material>
+		<Material Name="ac_edge_mat">
+			<Description><![CDATA["Reunan materiaali"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Material>
+		<PenColor Name="ac_cont_pen">
+			<Description><![CDATA["Ääriviivakynä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</PenColor>
+		<PenColor Name="ac_back_pen">
+			<Description><![CDATA["Taustan kynä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</PenColor>
+		<PenColor Name="ac_fill_pen">
+			<Description><![CDATA["Täytekynä"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</PenColor>
+		<FillPattern Name="ac_fill_type">
+			<Description><![CDATA["Täytetyyppi"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</FillPattern>
+		<LineType Name="ac_line_type">
+			<Description><![CDATA["Viivatyyppi"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</LineType>
+
+		<!-- gs_list: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Title Name="gs_list">
+			<Description><![CDATA["Kuvaus"]]></Description>
+			<Fix/>
+		</Title>
+		<RealNum Name="gs_list_cost">
+			<Description><![CDATA["Hinta"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</RealNum>
+		<String Name="gs_list_manufacturer">
+			<Description><![CDATA["Valmistaja"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_note">
+			<Description><![CDATA["Kommentti"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_location">
+			<Description><![CDATA["Sijainti"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_accessories">
+			<Description><![CDATA["Lisävarusteet"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="FM_Type">
+			<Description><![CDATA["Tyyppi"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA["Muut"]]></Value>
+		</String>
+		<Integer Name="iFMType">
+			<Description><![CDATA["Tyyppi"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+				<ParFlg_Hidden/>
+			</Flags>
+			<Value>25</Value>
+		</Integer>
+		<String Name="FM_InventoryNumber">
+			<Description><![CDATA["Tuotenumero"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="FM_SerialNumber">
+			<Description><![CDATA["Sarjanumero"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="FM_ProductionYear">
+			<Description><![CDATA["Valmistusvuosi"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<RealNum Name="FM_ObjectWeight">
+			<Description><![CDATA["Massa"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</RealNum>
+		<String Name="FM_ObjectWeightUnit">
+			<Description><![CDATA["Massan yksikkö"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA["kg"]]></Value>
+		</String>
+		<String Name="gs_list_custom1">
+			<Description><![CDATA["Käyttäjän määrittelemä 1"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_custom2">
+			<Description><![CDATA["Käyttäjän määrittelemä 2"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_custom3">
+			<Description><![CDATA["Käyttäjän määrittelemä 3"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_custom4">
+			<Description><![CDATA["Käyttäjän määrittelemä 4"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+		<String Name="gs_list_custom5">
+			<Description><![CDATA["Käyttäjän määrittelemä 5"]]></Description>
+			<Fix/>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
+	</Parameters>
+</ParamSection>
+
+<Copyright SectVersion="1" SectionFlags="0" SubIdent="0">
+	<Author></Author>
+	<License>
+		<Type>Commercial</Type>
+		<Version></Version>
+	</License>
+</Copyright>
+
+<Keywords SectVersion="1" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Keywords>
+
+<!-- GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT ===== GDL SCRIPT -->
+
+<Comment SectVersion="20" SectionFlags="0" SubIdent="0">
+<![CDATA[]]>
+</Comment>
+
+<Picture MIME="image/png" SectVersion="19" SectionFlags="0" SubIdent="0" length_in_bytes="2055" platform="Win">
+	<![CDATA[
+	696D6167652F706E670089504E470D0A1A0A0000000D494844520000007E0000
+	001008020000005FBF5CF5000000017352474200AECE1CE90000006C65584966
+	4D4D002A000000080004011A0005000000010000003E011B0005000000010000
+	004601280003000000010002000087690004000000010000004E000000000000
+	00480000000100000048000000010002A0020004000000010000007EA0030004
+	00000001000000100000000075A70A95000000097048597300000B1300000B13
+	01009A9C180000072A494441545809ED967948574B14C79F669925668B68B960
+	B4176A19D8668B8A1154564841B440655A940A5A5011111A284609EE8A650B41
+	4544411B9560819A4A51925B9954B66F96B964E6F37D7E1D196EF75EFDA357F8
+	1E347FDC3BF7CC77BEE73B67CE9CB9562F5EBCF8EB4FEB8D0858F786D33F3E2D
+	11F813FA5ECB83AED03F7AF4E8D6AD5BE5E5E54AC8BB77EF5A5A5AD4A7B173FF
+	FEFDD7AF5F1BED62292C2CFCF2E5CBC3870FEBEBEBBBC3FCB4FDEDDBB7309B4E
+	47330B311DD2197BD6AF0377F749B9AEAAAA62B4B6B6F6CD9B37DDC1B0B7B5B5
+	218CF6E1C307817585FECA952BF9F9F952F7ABABABC3C3C3B76FDFBE61C386FD
+	FBF7134153C6F3E7CFDFB973C774E8DBB76F478E1C79FEFCF9D5AB57D90353CC
+	BF319222172E5C306578FAF4695E5E5E6767A7E9E8EDDBB7557A29FD5AA3E9AC
+	1E8CA5A5A5972E5DB2B2B2BA7CF9F2DDBB777B401293C78F1F9F3871E2C18307
+	02B39197B5B5F58C19338283833B3A3A8E1E3DBA60C182952B577EFEFC79C78E
+	1DC42E2828C848BA77EFDEBFBF37E33AFBF6ED0B0954E3C68D63225E8DD37FDA
+	C23A51CBD39461E2C48984BEBDBDDDA80A7C4545C5800103BCBDBDE92BFD5AA3
+	29670FC6D0D050C4B040F44833F50BC3C0810357AF5EFDE4C913F042D8157A3E
+	98432499DFD8D8E8E2E2F2F5EBD7FEFDFBEFD9B3870862644E4E4E0EFB3666CC
+	98E8E8684747C7D4D4541F1F1F368CCFA953A772685C5D5DD7AE5D3B7EFCF8E6
+	E666C064819D9D1D5B3867CE1CCA4E6E6EAE9393537171B1878747444484A7A7
+	27C5213B3BFBDEBD7B0A0649656525600EEFECD9B3397608239175AE453AAA60
+	484F4F2791870E1DBA7CF9F29933673E7BF60C6109090946AA8B172F720A994B
+	B1DAB973A7E8E7F86B8D45454567CF9E7DF5EAD5A44993222323EDEDED591D2B
+	22FFB66DDB865ACA00C68686865DBB761D3C78B0A4A48498AC5BB70E5AF410C3
+	D3A74F53BDA91994109D6C2229CAE5F9C3352B3B161212929292B26FDF3E0E91
+	ADADEDB061C3802626267226382FA3478FCECACAC2C2B2D91EFC7DFCF8D1C6C6
+	865C239BCE9D3BC710793462C408127FD3A64D870F1F06C3A612D39123471E3F
+	7EDCCFCF0FD10263B7B4300A223B816E0044A1AEAECEE81A368CD20E1D3A846B
+	5C6CDEBC1955AC16479F3E7D0263A4625D9C66F2947C0220FAB546964F09DDBA
+	752B9258DA8D1B37F0C2EA48581C4D9932C5CDCD8D0A8391E7A851A338407821
+	CF440CD34F9D3A05434C4C0CE7DE183109AF8079FE107ABE195EB87021193161
+	C204424FECD843AE53B2E3FDFBF767CE9CC1199701D269C24267FEFCF98460EE
+	DCB9DC367C4E9B368D73C036106E94C96DC102962C59026CD9B265243501D2C1
+	608670F2E4C9CECECE9C0F2F2F2F5C83D4B916A7F2648F61EBD7AF1F6AC9D39A
+	9A1AEDA88E8A5D6175342980A25F6BA41484858571BE510E86D496E2B068D122
+	0A00CC818181DC934C242DE88B2FE1A14FB8AE5FBF1E1F1FCF21368D98561B7D
+	7DE871C9F548C159B1624546460611848E93D2A74F1FD29F8890F5D401E50F0A
+	16C3286B20ACC27EF2E4C9B4B4348CA489F2C7273CB254E99BC2882384C0481C
+	E6D201AC75AD08E9A096E88011184FAD301D157898B5D3A5AF8CDC6D9C1ECA11
+	E56BD0A0410A8F0B3034CE2BB9453D2444BEBEBE00B4EE060F1E0CF2E6CD9BC8
+	3046CCE8571F7AE6C4C6C6B2B7AC8A2349CE2282B2C0B673BE02020288FECB97
+	2FD1A1E5D27D927DF3E6CD5BBA74A9648D20B94290459F2AECE0E04034753045
+	4247FA3C870F1FDE9D6B964DA6F36F068C58F0B34851D6AAA26F21FA2E559E50
+	197F01C50800129EEBD7AF9F356B16FFAF2AAC845268C906EE366E177F7F7F35
+	2A437C328BBF120A2FFF30D45B9D6C9D303EF5A1674254541439BB71E3466E0F
+	7662F1E2C50812526ED1E4E4644EB7F267DA21E85C566BD6ACE160927A605036
+	64C8906BD7AE71CB53B5A886701A61C2A67D3251E75AD6CC1306AE6B721055BB
+	77EF5EB56A95BBBB3B46016849A4CFD0F4E9D3CBCACAE2E2E2C42248315228C6
+	8E1DCBE6C1B665CB169243312842F6809422F14941D868606454FA9404E29694
+	944439D5C9566CAA6325FFF29999996437BF229408EA06D94AB5C23D658BF4C7
+	25A71E7B535313F73B16B68414C04E23B8FCCCD1410446FA4C07DFDADACA748C
+	5C59FC061C3870803F048E11455F18C068614C044C831C7DB8633DF461D3B966
+	9682E1914B828C0149C30E5834288C50E154847D576D298FD20106217DDC61E4
+	66E2E702231608D5EA246420C1887E99881D9862038017118051450C9104E1D8
+	B163DC1C142ECB0285911F700E6C414101596959414707F58E2128643FC5880E
+	B90C19C23D4F4689AC60780A1E30BA71CCA7605043C4F9944861A41961629727
+	FCDDB9861C8C8CC209B956037D21576C8A8A893442C65CA59FBE323297D8A921
+	1814B3B08966712D248A4D8CCC158B2E62546FFE6E29D734A1B2643D50D4D350
+	C004A5F8177620972589BE5FC8FC7FA122C8E4226A65F3E8583E08876C11C3BF
+	69256C2A5E68BF89FFBF4FCBDAA50628A9FF00580DC9159897F0D50000000049
+	454E44AE426082
+	]]>
+</Picture>
+
+</Symbol>
