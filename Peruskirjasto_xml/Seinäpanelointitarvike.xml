@@ -24,6 +24,9 @@
 
 <Script_3D SectVersion="20" SectionFlags="0" SubIdent="0">
 <![CDATA[
+
+if not(varjot) then shadow off
+
 muly -1+2*ac_refside
  
 pen gs_view_pen
@@ -31,10 +34,10 @@ pen gs_view_pen
 building_material aine
 if pinta<>0 then material pinta
 
-cylind ac_wall_height +0.01,.01
-addx ac_wall_length
-cylind ac_wall_height +0.02,.005
-del 1
+!cylind ac_wall_height +0.01,.01
+!addx ac_wall_length
+!cylind ac_wall_height +0.02,.005
+!del 1
 
 if GLOB_FEEDBACK_MODE then _iDetlevel3D = DETLEVEL_3D_SIMPLE
 
@@ -169,14 +172,25 @@ HOTSPOT  0,0,1				, unId, bottom_extra, 3:unId=unId+1	! ref
 HOTSPOT  0,0,-bottom_extra	, unId, bottom_extra, 2:unId=unId+1	! moving
 del 1
 
+! -------------------- hodarit
 
-if tyyppi=T_PYSTY then ! -------------- tyyppi
-
-	add -start_extra + leveys, -paksuus, ac_wall_height/2
-	HOTSPOT  -0		,0,0	, unId, offset, 1:unId=unId+1	! base
-	HOTSPOT  -1		,0,0	, unId, offset, 3:unId=unId+1	! ref
-	HOTSPOT  offset	,0,0	, unId, offset, 2:unId=unId+1	! moving
+if tyyppi=T_PYSTY or tyyppi= T_PANEELI then ! --------------
+	add -start_extra + leveys, -paksuus, ac_wall_height/4
+	HOTSPOT  -0		,0,0	, unId, offsetx, 1:unId=unId+1	! base
+	HOTSPOT  -1		,0,0	, unId, offsetx, 3:unId=unId+1	! ref
+	HOTSPOT  offsetx	,0,0	, unId, offsetx, 2:unId=unId+1	! moving
 	del 1
+endif
+
+if tyyppi=T_VAAKA or tyyppi= T_PANEELI then ! --------------
+	add ac_wall_length/4, -paksuus,-bottom_extra + korkeus
+	HOTSPOT  0,0,-0			, unId, offsety, 1:unId=unId+1	! base
+	HOTSPOT  0,0,-1			, unId, offsety, 3:unId=unId+1	! ref
+	HOTSPOT  0,0,offsety		, unId, offsety, 2:unId=unId+1	! moving
+	del 1
+endif
+
+if tyyppi=T_PYSTY then ! --------------
 
 	muly -1
 	_pituus= bottom_extra+ac_wall_height+top_extra
@@ -189,11 +203,11 @@ if tyyppi=T_PYSTY then ! -------------- tyyppi
 		COOR{3} 2, 4,0,0,0,0,0,1,0,1,0,	1,0,0
 		del 1
 	else
-		for     l= -(leveys+rako)*(offset>EPS)+offset - start_extra - start_bevel_overshoot \
-				to   ac_wall_length + rako 			+ end_extra + end_bevel_overshoot \
-				step leveys+ rako
+		for     lx= -(leveys+rakox)*(offsetx>EPS)+offsetx - start_extra - start_bevel_overshoot \
+				to   ac_wall_length + rakox 			+ end_extra + end_bevel_overshoot \
+				step leveys+ rakox
 			if _iDetlevel3D = DETLEVEL_3D_DETAILED then
-				add l,0,-bottom_extra
+				add lx,0,-bottom_extra
 				rotz profiilin_kulma
 				if profiili = "Oma profiili" then 
 					gosub "prism omasta profiilista"
@@ -203,22 +217,17 @@ if tyyppi=T_PYSTY then ! -------------- tyyppi
 				del 2
 			endif
 			if _iDetlevel3D = DETLEVEL_3D_SIMPLE then
-				add l,-EPS,-bottom_extra
-				block leveys+min(0,rako), paksuus-EPS, _pituus
+				add lx,-EPS,-bottom_extra
+				block leveys+min(0,rakox), paksuus-EPS, _pituus
 				del 1
 			endif
 			COOR{3} 2, 4,0,0,0,0,0,1,0,1,0,1,0,0
-		next l
+		next lx
 	endif
 	del 1
 endif
-if tyyppi=T_VAAKA then ! --------------
 
-	add ac_wall_length/2, -paksuus,-bottom_extra + leveys
-	HOTSPOT  0,0,-0			, unId, offset, 1:unId=unId+1	! base
-	HOTSPOT  0,0,-1			, unId, offset, 3:unId=unId+1	! ref
-	HOTSPOT  0,0,offset		, unId, offset, 2:unId=unId+1	! moving
-	del 1
+if tyyppi=T_VAAKA then ! --------------
 
 	_pituus = start_bevel_overshoot + start_extra +  ac_wall_length + end_extra + end_bevel_overshoot
 
@@ -233,11 +242,11 @@ if tyyppi=T_VAAKA then ! --------------
 		rotx 180
 		roty 90
 		addz -start_bevel_overshoot-start_extra
-		for     l=  -(leveys+rako)*(offset>EPS)+offset - bottom_extra\
-				to   ac_wall_height+ rako + top_extra\
-				step leveys+ rako
+		for     ly=  -(korkeus+rakoy)*(offsety>EPS)+offsety - bottom_extra\
+				to   ac_wall_height+ rakoy + top_extra\
+				step korkeus + rakoy
 			if _iDetlevel3D = DETLEVEL_3D_DETAILED then
-				add l, 0, 0
+				add ly, 0, 0
 
 				rotz profiilin_kulma
 				if profiili = "Oma profiili" then 
@@ -248,13 +257,58 @@ if tyyppi=T_VAAKA then ! --------------
 				del 2
 			endif
 			if _iDetlevel3D = DETLEVEL_3D_SIMPLE then
-				add l,-EPS,0
-				block leveys+min(0,rako), paksuus-EPS, _pituus
+				add ly,-EPS,0
+				block korkeus +min(0,rakoy), paksuus-EPS, _pituus
 				del 1
 			endif
 				COOR{3} 2, 4,0,0,0,0,0,1,0,1,0,1,0,0
-		next l
+		next ly
 		del 3
+	endif
+
+endif
+
+
+if tyyppi= T_PANEELI then ! --------------
+
+	if _iDetlevel3D = DETLEVEL_3D_DRAFT then
+		add -start_bevel_overshoot-start_extra , -paksuus-EPS, -bottom_extra
+		block 	_pituus, 
+				paksuus-EPS,
+				ac_wall_height+bottom_extra+top_extra
+		del 1
+	else
+		for     ly=  -(korkeus +rakoy)*(offsety>EPS)+offsety - bottom_extra\
+				to   ac_wall_height+ rakoy + top_extra\
+				step korkeus + rakoy
+			for     lx= -(leveys+rakox)*(offsetx>EPS)+offsetx - start_extra - start_bevel_overshoot \
+					to   ac_wall_length + rakox 			+ end_extra + end_bevel_overshoot \
+					step leveys+ rakox
+				if _iDetlevel3D = DETLEVEL_3D_DETAILED then
+					add lx,-paksuus,ly
+					if oma_paneeli <> "" then
+						if peilaa then
+							mul 1,1,-1
+							rotx 90
+						else
+							mul 1,1,1
+							rotx 90
+						endif
+						call oma_paneeli parameters all a=leveys, b= korkeus, zzyzx = paksuus
+						del 2
+					else
+						block leveys+min(0,rakox), paksuus, korkeus +min(0,rakoy)
+					endif
+					del 1
+				endif
+				if _iDetlevel3D = DETLEVEL_3D_SIMPLE then
+					add lx,-paksuus ,ly-bottom_extra
+					block leveys+min(0,rakox), paksuus, korkeus +min(0,rakoy)
+					del 1
+				endif
+				COOR{3} 2, 4,0,0,0,0,0,1,0,1,0,1,0,0
+			next lx
+		next ly
 	endif
 
 endif
@@ -289,11 +343,11 @@ end ! --------------------------
 ! . |_______________|
 put		0						, paksuus			,15,
 		0						, paksuus/2+EPS	,15,
-		-rako+EPS	, paksuus/2+EPS	,15,
-		-rako +EPS	, EPS				,15,
+		-rakox+EPS	, paksuus/2+EPS	,15,
+		-rakox +EPS	, EPS				,15,
 		leveys					, EPS				,15,
 		leveys					, paksuus/2		,15,
-		leveys+rako, paksuus/2		,15,
+		leveys+rakox, paksuus/2		,15,
 		-(paksuus/2)/tan(28), paksuus/2, 100+15
 return
 
@@ -306,17 +360,17 @@ return
 	groovedepth=paksuus/6
 	put		0			,paksuus-groovedepth		,15,
 			0			,paksuus*2/3		,15,
-			-rako		,paksuus*2/3		,15,
-			-rako		,paksuus*1/3		,15,
+			-rakox		,paksuus*2/3		,15,
+			-rakox		,paksuus*1/3		,15,
 			0			,paksuus*1/3		,15,
 			0			, EPS				,15,
-			leveys+rako-EPS, EPS				,15,
-			leveys+rako-EPS, paksuus*1/3+EPS		,15,
+			leveys+rakox-EPS, EPS				,15,
+			leveys+rakox-EPS, paksuus*1/3+EPS		,15,
 			leveys-EPS					, paksuus*1/3+EPS		,15,
 			leveys-EPS					, paksuus*2/3-EPS		,15,
-			leveys+rako-EPS, paksuus*2/3-EPS		,15,
-			leveys+rako-EPS, paksuus-groovedepth	,15+64,
-			leveys+rako-2*groovedepth, paksuus-groovedepth	, 1000+15,
+			leveys+rakox-EPS, paksuus*2/3-EPS		,15,
+			leveys+rakox-EPS, paksuus-groovedepth	,15+64,
+			leveys+rakox-2*groovedepth, paksuus-groovedepth	, 1000+15,
 			-groovedepth,groovedepth		,100+15,
 			groovedepth, paksuus			,15
 return
@@ -331,7 +385,7 @@ return
 
 "prism omasta profiilista":
 	_profiili = oma_profiili
-	_flipx = peilaa_profiili
+	_flipx = peilaa
 	_flipy = 0
 	komponenttienMaara = 1
 	gosub "profiilitiedot"
@@ -339,9 +393,17 @@ return
 	profiiliosanPinta = 1
 	profiiliosanKyna = 1
 	for profiilinKomponentti = 1 to komponenttienMaara ! =1 jos ei omaa profiilia käytössä
-		gosub "profiilista tubeputit"
-		building_material profiiliosanRakennusaine
-		material profiiliosanPinta
+		gosub "profiilista prismputit"
+		if kayta_ainetta_omassa_profiilis then
+			building_material aine
+		else
+			building_material profiiliosanRakennusaine
+		endif
+		if kayta_pintaa_omassa_profiilis then
+			material pinta
+		else
+			material profiiliosanPinta
+		endif
 		prism_ profiilinPisteita, _pituus, get(NSP)
 	next profiilinKomponentti
 return
@@ -377,9 +439,9 @@ return
 	endif
 return 
 
-"profiilista tubeputit":
+"profiilista prismputit":
 ! in: _profiili, komponenttienMaara, _flip
-! out: profiiliosanRakennusaine,profiiliosanPinta,profiiliosanKyna, tubeputit pinossa
+! out: profiiliosanRakennusaine,profiiliosanPinta,profiiliosanKyna, prismputit pinossa
 
 		dim profiiliosanPinnat[]
 		n = REQUEST{3} ("profile_component_info", _profiili, profiilinKomponentti, "gs_profile_comp_surfaces", profiiliosanPinnat)
@@ -604,7 +666,7 @@ UI_DIALOG "Seinäpanelointitarvikkeen asetukset"
 
 sivu = 0
 rivivali = 22
-ensimmainen_rivi = 20
+ensimmainen_rivi = 10
 tab = 444/4-10
 inlev = tab-10
 inkor = rivivali-3
@@ -617,33 +679,79 @@ UI_PAGE sivu, -1, "Asetukset", "" ! ----------------------------- Asetukset
     x = 10
     y = ensimmainen_rivi
 
-    UI_OUTFIELD "profiili:",     x, y
-        UI_INFIELD "profiili", x+tab,y-nudge, inlev*2,inkor
+    UI_OUTFIELD "Tyyppi:",     x, y
+        UI_INFIELD "tyyppi", x+tab,y-nudge, inlev,inkor
+    UI_OUTFIELD "Oma paneeli:",     x+2*tab, y
+        UI_INFIELD "oma_paneeli", x+3*tab,y-nudge, inlev,inkor
                 y=y+rivivali
-    UI_OUTFIELD "oma_profiili:",     x, y
-        UI_INFIELD "oma_profiili", x+tab,y-nudge, inlev*2,inkor
+    UI_OUTFIELD "Profiili:",     x, y
+        UI_INFIELD "profiili", x+tab,y-nudge, inlev,inkor
+    UI_OUTFIELD "Oma profiili:",     x+2*tab, y
+        UI_INFIELD "oma_profiili", x+3*tab,y-nudge, inlev,inkor
                 y=y+rivivali
+
+    UI_OUTFIELD "Profiilin kulma:",     x, y
+        UI_INFIELD "profiilin_kulma", x+tab,y-nudge, inlev,inkor
+    UI_OUTFIELD "Peilaa:",     x+2*tab, y
+        UI_INFIELD "peilaa", x+3*tab,y-nudge
+                y=y+rivivali
+
+
+    UI_OUTFIELD "Leveys:",     x, y
+        UI_INFIELD "leveys", x+tab,y-nudge, inlev,inkor
+    UI_OUTFIELD "Korkeus:",     x+2*tab, y
+        UI_INFIELD "korkeus", x+3*tab,y-nudge, inlev,inkor
+                y=y+rivivali
+
+    UI_OUTFIELD "Vaakasiirto:",     x, y
+        UI_INFIELD "offsetx", x+tab,y-nudge, inlev,inkor
+    UI_OUTFIELD "Pystysiirto:",     x+2*tab, y
+        UI_INFIELD "offsety", x+3*tab,y-nudge, inlev,inkor
+                y=y+rivivali
+
+    UI_OUTFIELD "Vaakaako:",     x, y
+        UI_INFIELD "rakox", x+tab,y-nudge, inlev,inkor
+    UI_OUTFIELD "Pystyrako:",     x+2*tab, y
+        UI_INFIELD "rakoy", x+3*tab,y-nudge, inlev,inkor
+                y=y+rivivali
+    UI_OUTFIELD "Paksuus:",     x, y
+        UI_INFIELD "paksuus", x+tab,y-nudge, inlev,inkor
+                y=y+rivivali
+
+	UI_OUTFIELD "Käytä omassa profiilissa"	,x+3*tab		,y-rivivali
 
 	UI_OUTFIELD "Rakennusaine:"	,x		,y
 	UI_INFIELD "aine"		,x+tab	,y-nudge, inlev*2	,inkor
+	UI_INFIELD "kayta_ainetta_omassa_profiilis"		,x+3.5*tab	,y-nudge
 	y=y+rivivali
 
-	UI_OUTFIELD "Pinta (0:oletus):"	,x		,y	
+	UI_OUTFIELD "Pinta (0:rak.aine):"	,x		,y	
 	UI_INFIELD "pinta"		,x+tab	,y-nudge, inlev*2	,inkor
+	UI_INFIELD "kayta_pintaa_omassa_profiilis"		,x+3.5*tab	,y-nudge
 	y=y+rivivali
-
-UI_OUTFIELD "Extra dimensions:", x,y
-UI_INFIELD "top_extra", x+ 2*tab, y-nudge, tab, linespace-2
-y=y+ rivivali
-UI_INFIELD "start_extra", x+ tab, y-nudge, tab, linespace-2
-UI_INFIELD "end_extra"	, x+ 3*tab, y-nudge, tab, linespace-2
-y=y+ rivivali
-UI_INFIELD "bottom_extra", x+ 2*tab, y-nudge, tab, linespace-2
-y=y+ rivivali
 
 
 sivu = sivu+1
-call "Esitystapojen käyttöliittymä" parameters all sivu=sivu, nayta_taytteet = 1, esitystavan_mukainen=esitystavan_mukainen ! ----------------------------- Esitystavat
+UI_PAGE sivu, -1, "Lisäpituudet", "" ! ----------------------------- Lisäpituudet
+    x = 10
+    y = ensimmainen_rivi
+
+UI_OUTFIELD "Lisäpituus:", x,y
+tab = tab*0.75
+UI_INFIELD "top_extra", x+ 2*tab, y-nudge, tab, inkor
+y=y+ rivivali
+UI_INFIELD "start_extra", x+ tab, y-nudge, tab, inkor
+UI_INFIELD "end_extra"	, x+ 3*tab, y-nudge, tab, inkor
+y=y+ rivivali
+UI_INFIELD "bottom_extra", x+ 2*tab, y-nudge, tab, inkor
+y=y+ rivivali
+tab = tab/0.75
+
+
+sivu = sivu+1
+call "Esitystapojen käyttöliittymä" parameters all sivu=sivu, nayta_taytteet = 1, 
+		esitystavan_mukainen=esitystavan_mukainen, 
+		nayta_rautalanka = 0 ! ----------------------------- Esitystavat
 
 
 
@@ -678,12 +786,51 @@ values{2} "tyyppi" T_VAAKA,"Vaaka", T_PYSTY,"Pysty", T_PANEELI,"Paneeli"
 
 values "profiili" "Suorakaide", "Oma profiili"
 
+values "offsetx" range[0, leveys +rakox)
+values "offsety" range[0, korkeus+rakoy)
+
+
+if tyyppi = T_VAAKA then
+	lock "leveys", "offsetx", "rakox","oma_paneeli"
+endif
+if tyyppi = T_PYSTY then
+	lock "korkeus", "offsety", "rakoy","oma_paneeli"
+endif
+if tyyppi = T_PANEELI then
+	lock "profiili", "oma_profiili", "profiilin_kulma"
+endif
+
 if profiili = "Suorakaide" then 
-	lock "oma_profiili", "peilaa_profiili"
+	lock "oma_profiili", "kayta_ainetta_omassa_profiilis", "kayta_pintaa_omassa_profiilis"
 endif
 if profiili = "Oma profiili" then 
-	lock "paksuus", "aine", "pinta"
+	lock "paksuus"
 endif
+
+if profiili = "Oma profiili" and not(kayta_ainetta_omassa_profiilis) then 
+	lock "aine"
+endif
+if profiili = "Oma profiili" and not(kayta_pintaa_omassa_profiilis) then 
+	lock "pinta"
+endif
+
+
+values{2} "iDetlevel2D"		\
+	DETLEVEL_2D_MVO,		stDetlevel3D[DETLEVEL_2D_MVO],
+	!	DETLEVEL_2D_SCSENS,		stDetlevel2D[DETLEVEL_2D_SCSENS],
+	DETLEVEL_2D_DETAILED,	stDetlevel2D[DETLEVEL_2D_DETAILED],
+	DETLEVEL_2D_SIMPLE,		stDetlevel2D[DETLEVEL_2D_SIMPLE],
+	DETLEVEL_2D_DRAFT,		stDetlevel2D[DETLEVEL_2D_DRAFT],
+	DETLEVEL_2D_SYMBOLIC,	stDetlevel2D[DETLEVEL_2D_SYMBOLIC]
+
+values{2} "iDetlevel3D"	 \
+	DETLEVEL_3D_OFF,		stDetlevel3D[DETLEVEL_3D_OFF], 
+	!DETLEVEL_3D_MVO,		stDetlevel3D[DETLEVEL_3D_MVO],
+	DETLEVEL_3D_DETAILED,	stDetlevel3D[DETLEVEL_3D_DETAILED],
+	DETLEVEL_3D_SIMPLE,		stDetlevel3D[DETLEVEL_3D_SIMPLE]
+	!DETLEVEL_3D_DRAFT,		stDetlevel3D[DETLEVEL_3D_DRAFT]
+
+
 
 ! -------------------------- Esitystavat
 
@@ -758,23 +905,11 @@ values "gs_view_pen" range[1,255]
 			</Flags>
 			<Value>1</Value>
 		</Length>
-		<BuildingMaterial Name="aine">
-			<Description><![CDATA[""]]></Description>
-			<Value>49</Value>
-		</BuildingMaterial>
-		<Material Name="pinta">
-			<Description><![CDATA[""]]></Description>
-			<Value>0</Value>
-		</Material>
-		<Length Name="offset">
-			<Description><![CDATA["siirto"]]></Description>
-			<Value>-0.0162</Value>
-		</Length>
 
 		<!-- bbbbb: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
 
 		<Title Name="bbbbb">
-			<Description><![CDATA["Properties"]]></Description>
+			<Description><![CDATA["Profiilin asetukset"]]></Description>
 		</Title>
 		<String Name="profiili">
 			<Description><![CDATA["Profiili"]]></Description>
@@ -788,8 +923,15 @@ values "gs_view_pen" range[1,255]
 			<Flags>
 				<ParFlg_Child/>
 			</Flags>
-			<Value>1</Value>
+			<Value>2</Value>
 		</Integer>
+		<String Name="oma_paneeli">
+			<Description><![CDATA["Oma paneeliobjekti"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value><![CDATA[""]]></Value>
+		</String>
 		<Profile Name="oma_profiili">
 			<Description><![CDATA["Oma profiili"]]></Description>
 			<Flags>
@@ -797,7 +939,7 @@ values "gs_view_pen" range[1,255]
 			</Flags>
 			<Value>31</Value>
 		</Profile>
-		<Boolean Name="peilaa_profiili">
+		<Boolean Name="peilaa">
 			<Description><![CDATA["Peilaa profiili"]]></Description>
 			<Flags>
 				<ParFlg_Child/>
@@ -816,6 +958,13 @@ values "gs_view_pen" range[1,255]
 			<Flags>
 				<ParFlg_Child/>
 			</Flags>
+			<Value>0.2</Value>
+		</Length>
+		<Length Name="korkeus">
+			<Description><![CDATA["Korkeus"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
 			<Value>0.1</Value>
 		</Length>
 		<Length Name="paksuus">
@@ -825,13 +974,68 @@ values "gs_view_pen" range[1,255]
 			</Flags>
 			<Value>0.02</Value>
 		</Length>
-		<Length Name="rako">
-			<Description><![CDATA["Rako"]]></Description>
+		<Length Name="offsetx">
+			<Description><![CDATA["Vaakasiirto"]]></Description>
 			<Flags>
 				<ParFlg_Child/>
 			</Flags>
-			<Value>0.005</Value>
+			<Value>0</Value>
 		</Length>
+		<Length Name="offsety">
+			<Description><![CDATA["Pystysiirto"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Length>
+		<Length Name="rakox">
+			<Description><![CDATA["Vaakarako"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0.05</Value>
+		</Length>
+		<Length Name="rakoy">
+			<Description><![CDATA["Pystyrako"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0.05</Value>
+		</Length>
+
+		<!-- Seinpanelo_A: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
+
+		<Title Name="Seinpanelo_A">
+			<Description><![CDATA["Materiaalit"]]></Description>
+		</Title>
+		<BuildingMaterial Name="aine">
+			<Description><![CDATA["Rakennusaine"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>49</Value>
+		</BuildingMaterial>
+		<Boolean Name="kayta_ainetta_omassa_profiilis">
+			<Description><![CDATA["Käytä ainetta omassa profiilissa"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Boolean>
+		<Material Name="pinta">
+			<Description><![CDATA["Pintamateriaali"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Material>
+		<Boolean Name="kayta_pintaa_omassa_profiilis">
+			<Description><![CDATA["Käytä pintaa omassa profiilissa"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Boolean>
 
 		<!-- aaaaa: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
 
@@ -921,7 +1125,7 @@ values "gs_view_pen" range[1,255]
 			<Value>0</Value>
 		</Boolean>
 		<Integer Name="iDetlevel2D">
-			<Description><![CDATA["2D detail level"]]></Description>
+			<Description><![CDATA["2D esitystarkkuus"]]></Description>
 			<Flags>
 				<ParFlg_Child/>
 			</Flags>
@@ -935,6 +1139,20 @@ values "gs_view_pen" range[1,255]
 			</Flags>
 			<Value>2</Value>
 		</PenColor>
+		<LineType Name="gs_line_type">
+			<Description><![CDATA["Viivan tyyppi"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</LineType>
+		<Boolean Name="gs_fill">
+			<Description><![CDATA["Näytä täyte"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>0</Value>
+		</Boolean>
 		<PenColor Name="gs_fill_pen">
 			<Description><![CDATA["Täytekynä"]]></Description>
 			<Fix/>
@@ -960,11 +1178,11 @@ values "gs_view_pen" range[1,255]
 			<Value>65</Value>
 		</FillPattern>
 		<Integer Name="iDetlevel3D">
-			<Description><![CDATA["3D detail level"]]></Description>
+			<Description><![CDATA["3D esitystarkkuus"]]></Description>
 			<Flags>
 				<ParFlg_Child/>
 			</Flags>
-			<Value>3</Value>
+			<Value>4</Value>
 		</Integer>
 		<PenColor Name="gs_view_pen">
 			<Description><![CDATA["3D kynä"]]></Description>
@@ -973,6 +1191,13 @@ values "gs_view_pen" range[1,255]
 			</Flags>
 			<Value>1</Value>
 		</PenColor>
+		<Boolean Name="varjot">
+			<Description><![CDATA["Näytä varjot"]]></Description>
+			<Flags>
+				<ParFlg_Child/>
+			</Flags>
+			<Value>1</Value>
+		</Boolean>
 
 		<!-- gs_wall_addon: PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK ===== PARAMETER BLOCK -->
 
