@@ -682,10 +682,10 @@ UI_PAGE sivu, -1, "Asetukset", "" ! ----------------------------- Asetukset
     UI_OUTFIELD "Tyyppi:",     x, y
         UI_INFIELD "tyyppi", x+tab,y-nudge, inlev,inkor
     UI_OUTFIELD "Oma paneeli:",     x+2*tab, y
-        UI_INFIELD "oma_paneeli", x+3*tab,y-nudge, inlev,inkor
+        UI_INFIELD "oma_paneeli", x+3*tab,y-nudge, inlev,inkor UI_TOOLTIP "Paneelina käytettävän objektin nimi. Jätä tyhjäksi jos haluat suorakulmion."
                 y=y+rivivali
     UI_OUTFIELD "Profiili:",     x, y
-        UI_INFIELD "profiili", x+tab,y-nudge, inlev,inkor
+        UI_INFIELD "profiili", x+tab,y-nudge, inlev,inkor UI_TOOLTIP "Vaaka- tai pystypaneloinnin paneelin profiili."
     UI_OUTFIELD "Oma profiili:",     x+2*tab, y
         UI_INFIELD "oma_profiili", x+3*tab,y-nudge, inlev,inkor
                 y=y+rivivali
@@ -693,7 +693,7 @@ UI_PAGE sivu, -1, "Asetukset", "" ! ----------------------------- Asetukset
     UI_OUTFIELD "Profiilin kulma:",     x, y
         UI_INFIELD "profiilin_kulma", x+tab,y-nudge, inlev,inkor
     UI_OUTFIELD "Peilaa:",     x+2*tab, y
-        UI_INFIELD "peilaa", x+3*tab,y-nudge
+        UI_INFIELD "peilaa", x+3*tab,y-nudge UI_TOOLTIP "Peilaa oma profiili tai oma paneeli." 
                 y=y+rivivali
 
 
@@ -704,15 +704,15 @@ UI_PAGE sivu, -1, "Asetukset", "" ! ----------------------------- Asetukset
                 y=y+rivivali
 
     UI_OUTFIELD "Vaakasiirto:",     x, y
-        UI_INFIELD "offsetx", x+tab,y-nudge, inlev,inkor
+        UI_INFIELD "offsetx", x+tab,y-nudge, inlev,inkor UI_TOOLTIP "Origon siirto vaakatasossa"
     UI_OUTFIELD "Pystysiirto:",     x+2*tab, y
-        UI_INFIELD "offsety", x+3*tab,y-nudge, inlev,inkor
+        UI_INFIELD "offsety", x+3*tab,y-nudge, inlev,inkor UI_TOOLTIP "Origon siirto pystytasossa"
                 y=y+rivivali
 
-    UI_OUTFIELD "Vaakaako:",     x, y
-        UI_INFIELD "rakox", x+tab,y-nudge, inlev,inkor
+    UI_OUTFIELD "Vaakarako:",     x, y
+        UI_INFIELD "rakox", x+tab,y-nudge, inlev,inkor UI_TOOLTIP "Elementtien väliin jäävä rako vaakasuunnassa."
     UI_OUTFIELD "Pystyrako:",     x+2*tab, y
-        UI_INFIELD "rakoy", x+3*tab,y-nudge, inlev,inkor
+        UI_INFIELD "rakoy", x+3*tab,y-nudge, inlev,inkor UI_TOOLTIP "Elementtien väliin jäävä rako pystysuunnassa."
                 y=y+rivivali
     UI_OUTFIELD "Paksuus:",     x, y
         UI_INFIELD "paksuus", x+tab,y-nudge, inlev,inkor
@@ -722,12 +722,12 @@ UI_PAGE sivu, -1, "Asetukset", "" ! ----------------------------- Asetukset
 
 	UI_OUTFIELD "Rakennusaine:"	,x		,y
 	UI_INFIELD "aine"		,x+tab	,y-nudge, inlev*2	,inkor
-	UI_INFIELD "kayta_ainetta_omassa_profiilis"		,x+3.5*tab	,y-nudge
+	UI_INFIELD "kayta_ainetta_omassa_profiilis"		,x+3.5*tab	,y-nudge UI_TOOLTIP "Käytä profiilin rakennusaineen sijasta tätä ainetta."
 	y=y+rivivali
 
 	UI_OUTFIELD "Pinta (0:rak.aine):"	,x		,y	
 	UI_INFIELD "pinta"		,x+tab	,y-nudge, inlev*2	,inkor
-	UI_INFIELD "kayta_pintaa_omassa_profiilis"		,x+3.5*tab	,y-nudge
+	UI_INFIELD "kayta_pintaa_omassa_profiilis"		,x+3.5*tab	,y-nudge UI_TOOLTIP "Käytä profiilin pintamateriaalin sijasta tätä materiaalia."
 	y=y+rivivali
 
 
@@ -738,12 +738,12 @@ UI_PAGE sivu, -1, "Lisäpituudet", "" ! ----------------------------- Lisäpituu
 
 UI_OUTFIELD "Lisäpituus:", x,y
 tab = tab*0.75
-UI_INFIELD "top_extra", x+ 2*tab, y-nudge, tab, inkor
+UI_INFIELD "top_extra", x+ 2*tab, y-nudge, tab, inkor UI_TOOLTIP "Lisäpituus ylöspäin. Negatiivinen supistaa seinää matalammaksi."
 y=y+ rivivali
-UI_INFIELD "start_extra", x+ tab, y-nudge, tab, inkor
-UI_INFIELD "end_extra"	, x+ 3*tab, y-nudge, tab, inkor
+UI_INFIELD "start_extra", x+ tab, y-nudge, tab, inkor UI_TOOLTIP "Lisäpituus seinän alkupäässä. Negatiivinen supistaa kapeammaksi."
+UI_INFIELD "end_extra"	, x+ 3*tab, y-nudge, tab, inkor UI_TOOLTIP "Lisäpituus seinän loppupäässä. Negatiivinen supistaa kapeammaksi."
 y=y+ rivivali
-UI_INFIELD "bottom_extra", x+ 2*tab, y-nudge, tab, inkor
+UI_INFIELD "bottom_extra", x+ 2*tab, y-nudge, tab, inkor UI_TOOLTIP "Lisäpituus alaspäin. Negatiivinen supistaa alkamaan seinän alapintaa korkeammalta."
 y=y+ rivivali
 tab = tab/0.75
 
